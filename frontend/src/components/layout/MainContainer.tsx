@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import CalendarPlaceholder from '../calendar/CalendarPlaceholder';
-import NotesPlaceholder from '../notes/NotesPlaceholder';
+
 
 export default function MainContainer() {
   return (
@@ -33,7 +33,6 @@ export default function MainContainer() {
             
             <div className="flex-grow flex flex-col justify-between">
               <CalendarPlaceholder />
-              <NotesPlaceholder />
             </div>
           </div>
         </div>
