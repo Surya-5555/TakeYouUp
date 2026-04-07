@@ -45,7 +45,7 @@ export function TrendyCalendar() {
   return (
     <div className="relative flex flex-col items-center">
       {/* 3D Spiral Binding Header */}
-      <div className="relative w-full max-w-[95%] md:max-w-[700px] z-30 flex flex-col items-center justify-end h-[40px] md:h-[45px] -mb-[6px] pointer-events-none drop-shadow-xl">
+      <div className="relative w-full max-w-[95%] md:max-w-[900px] z-30 flex flex-col items-center justify-end h-[40px] md:h-[45px] -mb-[6px] pointer-events-none drop-shadow-xl">
         {/* Wall Hook */}
         <div className="w-[8px] md:w-[10px] h-[12px] md:h-[16px] bg-gradient-to-b from-[#e6c255] via-[#ca9e2e] to-[#735414] rounded-sm absolute top-[-6px] md:top-[-8px] shadow-[0_4px_6px_rgba(0,0,0,0.4)] z-0" />
 
@@ -64,18 +64,17 @@ export function TrendyCalendar() {
 
         {/* Coils Container */}
         <div className="flex w-full justify-between items-end px-[16px] md:px-[24px] z-20 h-full">
-          {Array.from({ length: 32 }).map((_, i) => {
-            // Leave gap in center (index 15, 16) for the hanger
-            if (i === 15 || i === 16) {
+          {Array.from({ length: 44 }).map((_, i) => {
+            // Leave gap in center (index 21, 22) for the hanger
+            if (i === 21 || i === 22) {
               return <div key={i} className="w-[6px] md:w-[8px]" />;
             }
-            // On very small screens we might want fewer, but 32 is a good compromise for mobile
             return (
-              <div key={i} className="relative w-[6px] md:w-[8px] h-[14px] md:h-[18px] flex items-end justify-center">
+              <div key={i} className="relative w-[5px] md:w-[7px] h-[14px] md:h-[18px] flex items-end justify-center">
                 {/* Dark Hole */}
-                <div className="absolute bottom-[2px] w-[4px] md:w-[6px] h-[6px] md:h-[8px] bg-[#1a1a1c] shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] rounded-full z-0" />
+                <div className="absolute bottom-[2px] w-[3px] md:w-[5px] h-[6px] md:h-[8px] bg-[#1a1a1c] shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] rounded-full z-0" />
                 {/* Golden Coil Arch */}
-                <svg className="absolute bottom-[4px] w-[10px] md:w-[12px] h-[16px] md:h-[20px] z-10 overflow-visible drop-shadow-[0_2px_1px_rgba(0,0,0,0.5)]" viewBox="0 0 14 24" fill="none">
+                <svg className="absolute bottom-[4px] w-[9px] md:w-[11px] h-[16px] md:h-[20px] z-10 overflow-visible drop-shadow-[0_2px_1px_rgba(0,0,0,0.5)]" viewBox="0 0 14 24" fill="none">
                   <path d="M 2 24 C -2 18, -2 4, 6 2 C 14 0, 16 10, 10 24" stroke="url(#coilGrad)" strokeWidth="3" strokeLinecap="round" />
                   <defs>
                     <linearGradient id="coilGrad" x1="0" y1="0" x2="14" y2="24" gradientUnits="userSpaceOnUse">
@@ -92,16 +91,16 @@ export function TrendyCalendar() {
         </div>
       </div>
 
-      <div className="w-[95%] max-w-[700px] bg-[#313235] shadow-2xl relative font-sans select-none overflow-hidden pb-6">
+      <div className="w-[95%] max-w-[900px] bg-[#313235] shadow-2xl relative font-sans select-none overflow-hidden pb-4">
         {/* Top Image Section */}
         <div
-          className="w-full h-[180px] md:h-[230px] bg-[#e0e0e0] relative z-20"
+          className="w-full h-[200px] md:h-[300px] bg-[#e0e0e0] relative z-20"
           style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 30px), 50% 100%, 0 calc(100% - 30px))" }}
         >
           <img
             src="/portrait.png"
             alt="Calendar Feature"
-            className="w-full h-full object-cover object-[center_45%]"
+            className="w-full h-full object-cover object-[center_35%]"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=800&auto=format&fit=crop";
             }}
@@ -112,37 +111,35 @@ export function TrendyCalendar() {
         </div>
 
         {/* Main Content Area: Notes on top/left, Calendar on bottom/right */}
-        <div className="flex flex-col md:flex-row w-full pt-6 md:pt-10 -mt-[30px] px-6 md:px-8 gap-6 md:gap-10 relative z-10">
+        <div className="flex flex-col md:flex-row w-full pt-2 md:pt-4 px-6 md:px-10 gap-4 md:gap-14 relative z-10">
           
           {/* LEFT/TOP: Notes Section */}
-          <div className="md:flex-[0.35] flex flex-col mt-2 md:pr-8 border-b md:border-b-0 md:border-r border-white/10 pb-6 md:pb-0">
-            <h3 className="text-[10px] md:text-[12px] font-bold text-white/90 tracking-widest mb-4 uppercase">Notes</h3>
-            <div className="flex flex-col gap-3 md:gap-4">
-              <div className="border-b border-white/10 h-3 md:h-4 w-full"></div>
-              <div className="border-b border-white/10 h-3 md:h-4 w-full"></div>
-              <div className="border-b border-white/10 h-3 md:h-4 w-full"></div>
-              <div className="border-b border-white/10 h-3 md:h-4 w-full md:hidden lg:block"></div>
+          <div className="md:flex-[0.3] flex flex-col mt-1 md:pr-10 border-b md:border-b-0 md:border-r border-white/10 pb-2 md:pb-0">
+            <h3 className="text-[10px] md:text-[11px] font-bold text-white/90 tracking-widest mb-2 uppercase">Notes</h3>
+            <div className="flex flex-col gap-2">
+              <div className="border-b border-white/10 h-3 w-full"></div>
+              <div className="border-b border-white/10 h-3 w-full"></div>
             </div>
           </div>
 
           {/* RIGHT/BOTTOM: Calendar Section */}
-          <div className="md:flex-[0.65] flex flex-col md:pl-4">
+          <div className="md:flex-[0.7] flex flex-col md:pl-6">
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 md:pb-4">
-              <h2 className="text-[18px] md:text-[20px] font-semibold text-white tracking-wide uppercase">
+            <div className="flex items-center justify-between pb-2 md:pb-3">
+              <h2 className="text-[16px] md:text-[18px] font-semibold text-white tracking-widest uppercase">
                 2021 {format(currentMonth, "MMMM")}
               </h2>
             </div>
 
             {/* Days of week header */}
-            <div className="grid grid-cols-7 px-0 pb-3">
+            <div className="grid grid-cols-7 px-0 pb-2">
               {dayNames.map((dayName, idx) => {
                 const isSelectedDayOfWeek = selectedDate && getDay(selectedDate) === (idx === 6 ? 0 : idx + 1);
                 return (
                   <div
                     key={dayName}
                     className={cn(
-                      "text-[10px] sm:text-[11px] font-bold tracking-widest text-center",
+                      "text-[10px] md:text-[11px] font-bold tracking-widest text-center",
                       isSelectedDayOfWeek ? "text-[#df8c2c]" : "text-[#e0e0e0]"
                     )}
                   >
@@ -210,8 +207,8 @@ export function TrendyCalendar() {
                           transition={{ duration: 0.35, ease: "easeInOut" }}
                           className="overflow-hidden relative z-10"
                         >
-                          <div className="pt-[14px] relative bg-[#313235]">
-                            <div className="bg-[#df8c2c] w-full px-4 py-4 flex items-center justify-between shadow-inner relative z-10 rounded-md mb-2">
+                          <div className="pt-2 relative bg-[#313235]">
+                            <div className="bg-[#df8c2c] w-full px-4 py-2 flex items-center justify-between shadow-inner relative z-10 rounded-md mb-1">
                               <div className="flex-1 w-full pl-2 pr-2">
                                 {MOCK_EVENTS[format(selectedDate, "yyyy-MM-dd")] ? (
                                   <div className="grid grid-cols-2 gap-x-4 gap-y-[6px]">
