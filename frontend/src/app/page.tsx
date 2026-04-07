@@ -1,9 +1,7 @@
-import MainContainer from '@/components/layout/MainContainer';
-
 export default function Home() {
   return (
-    <main className="min-h-screen bg-zinc-50 dark:bg-black font-sans text-foreground">
-      <MainContainer />
+    <main className="h-screen w-screen bg-white">
+      {/* Blank white page */}
     </main>
   );
 }
