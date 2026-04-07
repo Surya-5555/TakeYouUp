@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# files
+/public/expected/*
+
 # production
 /build
 
@@ -30,7 +33,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-#agent
+#agents
 AGENTS.md
 CLAUDE.md
 
