@@ -102,7 +102,7 @@ useGLTF.preload("/RobotExpressive.glb");
 export function CalendarIntro({ onComplete, onReveal }: { onComplete: () => void, onReveal: () => void }) {
   return (
     <div className="w-full h-full bg-transparent overflow-hidden relative select-none pointer-events-none">
-      <Canvas shadows>
+      <Canvas shadows={{ type: THREE.PCFShadowMap }}>
         <PerspectiveCamera makeDefault position={[0, 0, 7]} fov={50} />
         
         {/* Replacement Studio Lighting */}
