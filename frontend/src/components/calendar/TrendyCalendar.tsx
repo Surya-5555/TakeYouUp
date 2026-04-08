@@ -21,9 +21,9 @@ export function TrendyCalendar() {
     setMonthNote,
     setDayNote
   } = useCalendarStore();
-  
+
   const [hasMounted, setHasMounted] = React.useState(false);
-  
+
   React.useEffect(() => {
     setHasMounted(true);
   }, []);
@@ -144,115 +144,122 @@ export function TrendyCalendar() {
             }}
             className="absolute top-0 left-0 w-full bg-[#313235] shadow-2xl overflow-hidden pb-4 cursor-grab active:cursor-grabbing origin-top z-20"
           >
-            {/* Hero Section */}
-            <div className="w-full h-[180px] md:h-[280px] bg-[#1a1a1c] relative z-20 pointer-events-none overflow-hidden" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 15px), 50% 100%, 0 calc(100% - 15px))" }}>
-              {/* Branded Title */}
-              <div className="absolute top-4 left-6 z-30 pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                <h1 className="text-white text-[14px] md:text-[20px] font-black tracking-[0.4em] uppercase opacity-95">TAKE YOU UP</h1>
-                <div className="w-12 h-[2px] bg-[#df8c2c] mt-1 shadow-lg" />
+            {/* Hero Section Container */}
+            <div className="relative w-full h-[180px] md:h-[280px] z-20 pointer-events-none">
+              <div className="w-full h-full bg-[#1a1a1c] relative overflow-hidden" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 15px), 50% 100%, 0 calc(100% - 15px))" }}>
+                {/* Branded Title */}
+                <div className="absolute top-4 left-6 z-30 pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  <h1 className="text-white text-[14px] md:text-[20px] font-black tracking-[0.4em] uppercase opacity-95">TAKE YOU UP</h1>
+                  <div className="w-12 h-[2px] bg-[#df8c2c] mt-1 shadow-lg" />
+                </div>
+
+                {/* Cinematic Blurred Background */}
+                <img src="/portrait.png" className="absolute inset-0 w-full h-full object-cover blur-xl opacity-50 scale-125" />
+                <div className="absolute inset-0 bg-black/10" />
+
+                {/* Main Uncropped Portrait */}
+                <img src="/portrait.png" className="absolute inset-0 w-full h-[120%] -top-[10%] object-contain object-center z-10 drop-shadow-2xl" />
+                
+                <div className="absolute bottom-0 left-0 w-full h-[80px] bg-gradient-to-t from-[#3a3b40] via-[#3a3b40]/80 to-transparent z-20 pointer-events-none" />
               </div>
 
-              {/* Cinematic Blurred Background to fill ultra-wide aspect ratio */}
-              <img src="/portrait.png" className="absolute inset-0 w-full h-full object-cover blur-xl opacity-50 scale-125" />
-              <div className="absolute inset-0 bg-black/10" />
-
-              {/* Main Uncropped Portrait */}
-              <img src="/portrait.png" className="absolute inset-0 w-full h-[120%] -top-[10%] object-contain object-center z-10 drop-shadow-2xl" />
-              
-              <div className="absolute bottom-0 left-0 w-full h-[80px] bg-gradient-to-t from-[#313235] via-[#313235]/70 to-transparent z-20 pointer-events-none" />
+              {/* V-Notch White Separator Line */}
+              <svg viewBox="0 0 1000 15" preserveAspectRatio="none" className="absolute bottom-0 left-0 w-full h-[15px] z-30 pointer-events-none opacity-40">
+                <polyline points="0,0 500,14.5 1000,0" stroke="white" strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" />
+              </svg>
             </div>
 
-        <div className="flex flex-col md:flex-row w-full pt-1 md:pt-2 px-6 md:px-12 gap-8 md:gap-16 relative z-10">
+            <div className="flex flex-col md:flex-row w-full pt-1 md:pt-2 px-6 md:px-12 gap-8 md:gap-16 relative z-10">
 
-          {/* LEFT: 月份备注 Section (5 Lines) */}
-          <div className="md:flex-[0.25] flex flex-col mt-1 md:pr-10 border-b md:border-b-0 md:border-r border-white/10 pb-2 md:pb-0">
-            <h3 className="text-[10px] md:text-[11px] font-bold text-white/90 tracking-widest mb-2 uppercase">Monthly Schedule</h3>
-            <div className="flex flex-col gap-[1px]">
-              {monthNotes.map((note, i) => (
-                <input
-                  key={i}
-                  value={note}
-                  onChange={(e) => setMonthNote(i, e.target.value)}
-                  placeholder={`Memo line ${i + 1}`}
-                  className="w-full bg-transparent border-b border-white/10 h-6 text-white/80 placeholder:text-white/10 italic text-[12px] md:text-[13px] focus:outline-none focus:border-[#df8c2c]/40 transition-all font-serif cursor-text"
-                  onPointerDownCapture={(e) => e.stopPropagation()} // Prevent drag conflict
-                />
-              ))}
-            </div>
-          </div>
+              {/* LEFT: 月份备注 Section (5 Lines) */}
+              <div className="md:flex-[0.25] flex flex-col mt-1 md:pr-10 border-b md:border-b-0 md:border-r border-white/30 pb-2 md:pb-0">
+                <h3 className="text-[10px] md:text-[11px] font-bold text-white/90 tracking-widest mb-2 uppercase">Monthly Schedule</h3>
+                <div className="flex flex-col gap-[1px]">
+                  {monthNotes.map((note, i) => (
+                    <input
+                      key={i}
+                      value={note}
+                      onChange={(e) => setMonthNote(i, e.target.value)}
+                      placeholder={`Memo line ${i + 1}`}
+                      className="w-full bg-transparent border-b border-white/40 h-6 text-white/90 placeholder:text-white/30 italic text-[12px] md:text-[13px] focus:outline-none focus:border-[#df8c2c] transition-all font-serif cursor-text"
+                      onPointerDownCapture={(e) => e.stopPropagation()} // Prevent drag conflict
+                    />
+                  ))}
+                </div>
+              </div>
 
-          {/* RIGHT: Calendar Grid */}
-          <div className="md:flex-[0.75] flex flex-col md:pl-6">
-            <div className="flex items-center justify-between pb-1 md:pb-2">
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => changeMonth(-1)} 
-                  onPointerDown={(e) => e.stopPropagation()} 
-                  className="p-1 rounded-full text-[#a0a0a0] hover:text-white hover:bg-white/10 transition-colors z-30"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <h2 className="text-[16px] md:text-[20px] font-semibold text-white tracking-[0.2em] uppercase">{format(currentMonth, "yyyy MMMM")}</h2>
-                <button 
-                  onClick={() => changeMonth(1)}
-                  onPointerDown={(e) => e.stopPropagation()} 
-                  className="p-1 rounded-full text-[#a0a0a0] hover:text-white hover:bg-white/10 transition-colors z-30"
-                >
-                  <ChevronRight size={18} />
-                </button>
+              {/* RIGHT: Calendar Grid */}
+              <div className="md:flex-[0.75] flex flex-col md:pl-6">
+                <div className="flex items-center justify-between pb-1 md:pb-2">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => changeMonth(-1)}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="p-1 rounded-full text-[#a0a0a0] hover:text-white hover:bg-white/10 transition-colors z-30"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <h2 className="text-[16px] md:text-[20px] font-semibold text-white tracking-[0.2em] uppercase">{format(currentMonth, "yyyy MMMM")}</h2>
+                    <button
+                      onClick={() => changeMonth(1)}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="p-1 rounded-full text-[#a0a0a0] hover:text-white hover:bg-white/10 transition-colors z-30"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-7 px-0 pb-2 border-b border-white/20 mb-2">
+                  {dayNames.map((name) => <div key={name} className="text-[10px] md:text-[11px] font-bold tracking-widest text-center text-[#e0e0e0] opacity-80">{name}</div>)}
+                </div>
+
+                <div className="flex flex-col">
+                  {rows.map((week, weekIndex) => {
+                    const isWeekSelected = week.some(d => (rangeStart && isSameDay(d, rangeStart)) || (rangeEnd && isSameDay(d, rangeEnd)));
+                    const currentOpenDate = (rangeEnd && isWeekSelected) ? rangeEnd : (rangeStart && isWeekSelected ? rangeStart : null);
+
+                    return (
+                      <React.Fragment key={weekIndex}>
+                        <div className="grid grid-cols-7 px-1 py-0 relative z-20 bg-[#313235]">
+                          {week.map((date, dayIndex) => {
+                            const isSelectedDate = isSelected(date);
+                            const isDayInRange = isInRange(date);
+                            const isCurrMonth = isSameMonth(date, currentMonth);
+                            const dateKey = format(date, "yyyy-MM-dd");
+                            const hasNote = dayNotes[dateKey]?.some(n => n.trim().length > 0);
+
+                            return (
+                              <div key={dayIndex} className="relative flex justify-center py-[1px]">
+                                <button
+                                  onClick={() => handleDateClick(date)}
+                                  onPointerDown={(e) => e.stopPropagation()}
+                                  suppressHydrationWarning
+                                  className={cn(
+                                    "w-8 h-8 flex items-center justify-center rounded-full text-[13px] transition-all relative z-10",
+                                    !isCurrMonth ? "text-[#a0a0a0]/40" : "text-white font-medium",
+                                    isSelectedDate ? "text-[#313235] font-bold" : "",
+                                    isDayInRange ? "bg-[#df8c2c]/20 text-white rounded-none" : ""
+                                  )}
+                                >
+                                  {format(date, "d")}
+                                </button>
+                                {isSelectedDate && (
+                                  <motion.div layoutId="sel" className="absolute inset-0 m-auto w-[28px] h-[28px] rounded-full bg-[#df8c2c] z-0 shadow-lg shadow-[#df8c2c]/30" />
+                                )}
+                                {hasNote && !isSelectedDate && <div className="absolute bottom-1 w-1 h-1 rounded-full bg-[#df8c2c]/50" />}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Inline Expansion removed in favor of Popup */}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-
-            <div className="grid grid-cols-7 px-0 pb-1">
-              {dayNames.map((name) => <div key={name} className="text-[10px] md:text-[11px] font-bold tracking-widest text-center text-[#e0e0e0]">{name}</div>)}
-            </div>
-
-            <div className="flex flex-col">
-              {rows.map((week, weekIndex) => {
-                const isWeekSelected = week.some(d => (rangeStart && isSameDay(d, rangeStart)) || (rangeEnd && isSameDay(d, rangeEnd)));
-                const currentOpenDate = (rangeEnd && isWeekSelected) ? rangeEnd : (rangeStart && isWeekSelected ? rangeStart : null);
-
-                return (
-                  <React.Fragment key={weekIndex}>
-                    <div className="grid grid-cols-7 px-1 py-0 relative z-20 bg-[#313235]">
-                      {week.map((date, dayIndex) => {
-                        const isSelectedDate = isSelected(date);
-                        const isDayInRange = isInRange(date);
-                        const isCurrMonth = isSameMonth(date, currentMonth);
-                        const dateKey = format(date, "yyyy-MM-dd");
-                        const hasNote = dayNotes[dateKey]?.some(n => n.trim().length > 0);
-
-                        return (
-                          <div key={dayIndex} className="relative flex justify-center py-[1px]">
-                            <button
-                              onClick={() => handleDateClick(date)}
-                              onPointerDown={(e) => e.stopPropagation()}
-                              suppressHydrationWarning
-                              className={cn(
-                                "w-8 h-8 flex items-center justify-center rounded-full text-[13px] transition-all relative z-10",
-                                !isCurrMonth ? "text-[#a0a0a0]/40" : "text-white font-medium",
-                                isSelectedDate ? "text-[#313235] font-bold" : "",
-                                isDayInRange ? "bg-[#df8c2c]/20 text-white rounded-none" : ""
-                              )}
-                            >
-                              {format(date, "d")}
-                            </button>
-                            {isSelectedDate && (
-                              <motion.div layoutId="sel" className="absolute inset-0 m-auto w-[28px] h-[28px] rounded-full bg-[#df8c2c] z-0 shadow-lg shadow-[#df8c2c]/30" />
-                            )}
-                            {hasNote && !isSelectedDate && <div className="absolute bottom-1 w-1 h-1 rounded-full bg-[#df8c2c]/50" />}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Inline Expansion removed in favor of Popup */}
-                  </React.Fragment>
-                );
-              })}
-            </div>
-          </div>
-        </div>
           </motion.div>
         </AnimatePresence>
       </div>
@@ -269,7 +276,7 @@ export function TrendyCalendar() {
               onClick={() => setRangeStart(null)}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
-            
+
             {/* Notepad Modal */}
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -279,21 +286,21 @@ export function TrendyCalendar() {
             >
               {/* Pink notebook line */}
               <div className="absolute left-10 top-0 bottom-0 w-[2px] bg-red-100/60" />
-              
+
               <div className="relative pl-8">
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Today's Agenda</h4>
                     <p className="text-[18px] font-serif font-bold text-gray-800">{format(rangeStart, "MMMM do, yyyy")}</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setRangeStart(null)}
                     className="p-2 hover:bg-black/5 rounded-full transition-colors text-gray-400 hover:text-gray-600"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
-                
+
                 <div className="flex flex-col gap-1">
                   {Array.from({ length: 5 }).map((_, i) => {
                     const key = format(rangeStart, "yyyy-MM-dd");
@@ -308,9 +315,9 @@ export function TrendyCalendar() {
                     );
                   })}
                 </div>
-                
+
                 <div className="mt-8 flex justify-end">
-                  <button 
+                  <button
                     onClick={() => setRangeStart(null)}
                     className="bg-[#df8c2c] text-white px-6 py-2 rounded-full text-[12px] font-black uppercase tracking-widest shadow-lg shadow-[#df8c2c]/30 hover:scale-105 transition-transform"
                   >
