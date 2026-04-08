@@ -74,6 +74,7 @@ function Robot({ onAnimationComplete, onReveal }: { onAnimationComplete: () => v
   useFrame((state, delta) => {
     if (!group.current) return;
 
+    // Use delta for frame-rate independent movement (modern practice)
     if (phase === "entering") {
       group.current.position.x += 2 * delta;
       group.current.rotation.y = Math.PI / 2 + 0.3;
