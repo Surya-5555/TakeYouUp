@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { format, isSameMonth, isSameDay, getDay, parseISO, isAfter, isBefore, eachDayOfInterval } from "date-fns";
+import { format, isSameMonth, isSameDay, getDay, parseISO, isAfter, isBefore, addMonths, subMonths } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { Search, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCalendarStore } from "@/store/useCalendarStore";
 import { generateCalendarGrid, dayNames } from "@/lib/dateUtils";
@@ -20,6 +21,19 @@ export function TrendyCalendar() {
     setMonthNote,
     setDayNote
   } = useCalendarStore();
+  
+  const [hasMounted, setHasMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  const [direction, setDirection] = useState(0);
+
+  const changeMonth = (dir: number) => {
+    setDirection(dir);
+    setCurrentMonth(dir > 0 ? addMonths(parseISO(curMonthStr), 1) : subMonths(parseISO(curMonthStr), 1));
+  };
 
   const currentMonth = parseISO(curMonthStr);
   const rangeStart = startStr ? parseISO(startStr) : null;
@@ -49,8 +63,33 @@ export function TrendyCalendar() {
     return (rangeStart && isSameDay(date, rangeStart)) || (rangeEnd && isSameDay(date, rangeEnd));
   };
 
+  if (!hasMounted) return null;
+
+  const flipVariants = {
+    enter: (direction: number) => ({
+      rotateX: direction > 0 ? -90 : 90,
+      opacity: 0,
+      y: direction > 0 ? 50 : -50,
+      scale: 0.95
+    }),
+    center: {
+      rotateX: 0,
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { type: "spring" as const, stiffness: 220, damping: 25 }
+    },
+    exit: (direction: number) => ({
+      rotateX: direction < 0 ? -90 : 90,
+      opacity: 0,
+      y: direction < 0 ? 50 : -50,
+      scale: 0.95,
+      transition: { type: "spring" as const, stiffness: 220, damping: 25 }
+    })
+  };
+
   return (
-    <div className="relative flex flex-col items-center">
+    <div className="relative flex flex-col items-center w-full">
       {/* 3D Spiral Binding Header */}
       <div className="relative w-full max-w-[95%] md:max-w-[1000px] z-30 flex flex-col items-center justify-end h-[40px] md:h-[45px] -mb-[6px] pointer-events-none drop-shadow-xl">
         {/* Wall Hook */}
@@ -81,18 +120,47 @@ export function TrendyCalendar() {
         </div>
       </div>
 
-      <div className="w-[95%] max-w-[1000px] bg-[#313235] shadow-2xl relative font-sans select-none overflow-hidden pb-4">
-        {/* Hero Section */}
-        <div className="w-full h-[180px] md:h-[280px] bg-[#e0e0e0] relative z-20" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 15px), 50% 100%, 0 calc(100% - 15px))" }}>
-          {/* Branded Title */}
-          <div className="absolute top-4 left-6 z-30 pointer-events-none">
-            <h1 className="text-white text-[14px] md:text-[20px] font-black tracking-[0.4em] uppercase drop-shadow-md opacity-90">TAKE YOU UP</h1>
-            <div className="w-12 h-[2px] bg-[#df8c2c] mt-1" />
-          </div>
+      <div className="w-[95%] max-w-[1000px] relative font-sans select-none" style={{ perspective: "1500px" }}>
+        {/* Invisible Ghost layer to maintain height during 3D absolute flips */}
+        <div className="invisible pointer-events-none opacity-0 pb-4 h-[440px] md:h-[510px] w-full"></div>
 
-          <img src="/portrait.png" className="w-full h-full object-cover object-[center_40%]" />
-          <div className="absolute bottom-0 left-0 w-full h-[60px] bg-gradient-to-t from-[#313235]/90 to-transparent pointer-events-none" />
-        </div>
+        <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+          <motion.div
+            key={currentMonth.toISOString()}
+            custom={direction}
+            variants={flipVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.4}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (offset.y < -100 || velocity.y < -400) {
+                changeMonth(1); // Swipe UP (flip page away) -> Next Month
+              } else if (offset.y > 100 || velocity.y > 400) {
+                changeMonth(-1); // Swipe DOWN (flip back) -> Prev Month
+              }
+            }}
+            className="absolute top-0 left-0 w-full bg-[#313235] shadow-2xl overflow-hidden pb-4 cursor-grab active:cursor-grabbing origin-top z-20"
+          >
+            {/* Hero Section */}
+            <div className="w-full h-[180px] md:h-[280px] bg-[#1a1a1c] relative z-20 pointer-events-none overflow-hidden" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 15px), 50% 100%, 0 calc(100% - 15px))" }}>
+              {/* Branded Title */}
+              <div className="absolute top-4 left-6 z-30 pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                <h1 className="text-white text-[14px] md:text-[20px] font-black tracking-[0.4em] uppercase opacity-95">TAKE YOU UP</h1>
+                <div className="w-12 h-[2px] bg-[#df8c2c] mt-1 shadow-lg" />
+              </div>
+
+              {/* Cinematic Blurred Background to fill ultra-wide aspect ratio */}
+              <img src="/portrait.png" className="absolute inset-0 w-full h-full object-cover blur-xl opacity-50 scale-125" />
+              <div className="absolute inset-0 bg-black/10" />
+
+              {/* Main Uncropped Portrait */}
+              <img src="/portrait.png" className="absolute inset-0 w-full h-[120%] -top-[10%] object-contain object-center z-10 drop-shadow-2xl" />
+              
+              <div className="absolute bottom-0 left-0 w-full h-[80px] bg-gradient-to-t from-[#313235] via-[#313235]/70 to-transparent z-20 pointer-events-none" />
+            </div>
 
         <div className="flex flex-col md:flex-row w-full pt-1 md:pt-2 px-6 md:px-12 gap-8 md:gap-16 relative z-10">
 
@@ -106,7 +174,8 @@ export function TrendyCalendar() {
                   value={note}
                   onChange={(e) => setMonthNote(i, e.target.value)}
                   placeholder={`Memo line ${i + 1}`}
-                  className="w-full bg-transparent border-b border-white/10 h-6 text-white/80 placeholder:text-white/10 italic text-[12px] md:text-[13px] focus:outline-none focus:border-[#df8c2c]/40 transition-all font-serif"
+                  className="w-full bg-transparent border-b border-white/10 h-6 text-white/80 placeholder:text-white/10 italic text-[12px] md:text-[13px] focus:outline-none focus:border-[#df8c2c]/40 transition-all font-serif cursor-text"
+                  onPointerDownCapture={(e) => e.stopPropagation()} // Prevent drag conflict
                 />
               ))}
             </div>
@@ -115,7 +184,23 @@ export function TrendyCalendar() {
           {/* RIGHT: Calendar Grid */}
           <div className="md:flex-[0.75] flex flex-col md:pl-6">
             <div className="flex items-center justify-between pb-1 md:pb-2">
-              <h2 className="text-[16px] md:text-[20px] font-semibold text-white tracking-[0.2em] uppercase">{format(currentMonth, "yyyy MMMM")}</h2>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => changeMonth(-1)} 
+                  onPointerDown={(e) => e.stopPropagation()} 
+                  className="p-1 rounded-full text-[#a0a0a0] hover:text-white hover:bg-white/10 transition-colors z-30"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <h2 className="text-[16px] md:text-[20px] font-semibold text-white tracking-[0.2em] uppercase">{format(currentMonth, "yyyy MMMM")}</h2>
+                <button 
+                  onClick={() => changeMonth(1)}
+                  onPointerDown={(e) => e.stopPropagation()} 
+                  className="p-1 rounded-full text-[#a0a0a0] hover:text-white hover:bg-white/10 transition-colors z-30"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-7 px-0 pb-1">
@@ -141,6 +226,8 @@ export function TrendyCalendar() {
                           <div key={dayIndex} className="relative flex justify-center py-[1px]">
                             <button
                               onClick={() => handleDateClick(date)}
+                              onPointerDown={(e) => e.stopPropagation()}
+                              suppressHydrationWarning
                               className={cn(
                                 "w-8 h-8 flex items-center justify-center rounded-full text-[13px] transition-all relative z-10",
                                 !isCurrMonth ? "text-[#a0a0a0]/40" : "text-white font-medium",
@@ -166,6 +253,8 @@ export function TrendyCalendar() {
             </div>
           </div>
         </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Daily Agenda Popup */}

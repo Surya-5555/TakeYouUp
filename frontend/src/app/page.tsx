@@ -1,4 +1,4 @@
-import { TrendyCalendar } from "@/components/trendy-calendar";
+import { TrendyCalendar } from "@/components/calendar/TrendyCalendar";
 
 export default function Home() {
   return (
