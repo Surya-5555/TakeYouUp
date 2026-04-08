@@ -354,14 +354,12 @@ export function TrendyCalendar() {
                   </button>
                 </div>
               </div>
-              <div className={styles.heroDeco} aria-hidden="true">
-                {MONTH_ABBR[currentMonth.getMonth()]}
-              </div>
+              <div className={styles.heroCenterWord} aria-hidden="true">TUF</div>
               
               {/* Added fallback to ensure next.js can load standard imgs without error */}
               <img src="/portrait.png" alt="Portrait" className={styles.heroPortrait} />
               
-              <div className={styles.heroSwipeHint}>swipe up/down or drag to flip pages</div>
+              <div className={styles.heroSwipeHint}>Use left/right icons or drag to flip pages</div>
             </div>
 
             {/* BODY */}

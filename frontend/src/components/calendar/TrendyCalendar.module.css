@@ -641,6 +641,24 @@
   user-select: none;
 }
 
+.heroCenterWord {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Caveat Brush", cursive;
+  font-size: clamp(40px, 10vw, 84px);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  font-variant-caps: small-caps;
+  text-transform: none;
+  color: rgba(127, 210, 228, 0.42);
+  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.38);
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
+}
+
 /* ─── FIX #2: HERO PORTRAIT ────────────────────────────────────────
    Added strict width/max-width constraints so `object-fit: contain`
    doesn't collapse the image bounding box to 0. 
@@ -662,9 +680,13 @@
   position: absolute;
   bottom: 6px; left: 50%;
   transform: translateX(-50%);
-  font-size: 10px;
-  color: rgba(253, 246, 227, 0.3);
-  font-family: "Caveat", cursive;
+  font-size: 9px;
+  color: rgba(223, 140, 44, 0.9);
+  font-family: "Caveat Brush", cursive;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
   z-index: 6;
 }
