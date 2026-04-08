@@ -281,10 +281,9 @@ export function TrendyCalendar() {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               className="bg-[#fcfaf2] w-full max-w-[400px] rounded-2xl p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative border border-black/5 overflow-hidden"
             >
-              {/* Pink notebook line */}
-              <div className="absolute left-10 top-0 bottom-0 w-[2px] bg-red-100/60" />
 
-              <div className="relative pl-8">
+
+              <div className="relative">
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Today's Agenda</h4>
@@ -307,7 +306,7 @@ export function TrendyCalendar() {
                         defaultValue={dayNotes[key]?.[i] || ""}
                         onBlur={(e) => setDayNote(key, i, e.target.value)}
                         placeholder={i === 0 ? "What's the plan?" : "..."}
-                        className="w-full bg-transparent border-b border-blue-100/50 h-10 text-gray-700 focus:outline-none focus:border-blue-400/30 placeholder:text-gray-300 font-serif text-[16px]"
+                        className="w-full bg-transparent border-b border-black/20 h-10 text-black/80 focus:outline-none focus:border-black/50 placeholder:text-black/30 font-serif text-[16px] transition-colors"
                       />
                     );
                   })}
