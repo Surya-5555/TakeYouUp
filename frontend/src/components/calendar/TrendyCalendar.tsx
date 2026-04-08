@@ -18,10 +18,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCalendarStore } from "@/store/useCalendarStore";
 import styles from "./TrendyCalendar.module.css";
 
-type FlipPhase = "idle" | "outNext" | "outPrev" | "inNext" | "inPrev";
+type CalendarFlipPhase = "idle" | "outNext" | "outPrev" | "inNext" | "inPrev";
 
 const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-const MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const SHELF_BOOKS: Array<[number, number, string]> = [
   [12, 50, "#8a2020"],
@@ -33,7 +32,7 @@ const SHELF_BOOKS: Array<[number, number, string]> = [
   [13, 52, "#2a5a5a"],
 ];
 
-const MOTE_DATA = Array.from({ length: 16 }, (_, i) => ({
+const DUST_MOTES = Array.from({ length: 16 }, (_, i) => ({
   id: i,
   left:     `${5 + (i * 6.1) % 88}%`,
   top:      `${10 + (i * 8.3) % 70}%`,
@@ -42,26 +41,28 @@ const MOTE_DATA = Array.from({ length: 16 }, (_, i) => ({
   delay:    (i * 1.2) % 16,
 }));
 
-function getFlipClass(phase: FlipPhase): string {
-  if (phase === "outNext") return styles.flipOutNext;
-  if (phase === "inNext")  return styles.flipInNext;
-  if (phase === "outPrev") return styles.flipOutPrev;
-  if (phase === "inPrev")  return styles.flipInPrev;
+function getFlipAnimationClass(flipPhase: CalendarFlipPhase): string {
+  if (flipPhase === "outNext") return styles.flipOutNext;
+  if (flipPhase === "inNext")  return styles.flipInNext;
+  if (flipPhase === "outPrev") return styles.flipOutPrev;
+  if (flipPhase === "inPrev")  return styles.flipInPrev;
   return "";
 }
 
-function buildMonthCells(currentMonth: Date): Date[] {
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd   = endOfMonth(currentMonth);
+function buildVisibleMonthDates(monthDate: Date): Date[] {
+  const monthStart = startOfMonth(monthDate);
+  const monthEnd   = endOfMonth(monthDate);
   const gridStart  = startOfWeek(monthStart, { weekStartsOn: 0 });
   const gridEnd    = endOfWeek(monthEnd,   { weekStartsOn: 0 });
-  const cells: Date[] = [];
-  let cursor = gridStart;
-  while (cursor <= gridEnd) {
-    cells.push(cursor);
-    cursor = addDays(cursor, 1);
+  const visibleDates: Date[] = [];
+  let currentDate = gridStart;
+
+  while (currentDate <= gridEnd) {
+    visibleDates.push(currentDate);
+    currentDate = addDays(currentDate, 1);
   }
-  return cells;
+
+  return visibleDates;
 }
 
 export function TrendyCalendar() {
@@ -74,109 +75,152 @@ export function TrendyCalendar() {
     setFullDayNote,
   } = useCalendarStore();
 
-  const [phase, setPhase]                     = useState<FlipPhase>("idle");
-  const [overlayOpen, setOverlayOpen]         = useState(false);
-  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
-  const [draftNotes, setDraftNotes]           = useState<string[]>(["","","","",""]);
+  const [flipPhase, setFlipPhase]                   = useState<CalendarFlipPhase>("idle");
+  const [isDayNotesModalOpen, setIsDayNotesModalOpen] = useState(false);
+  const [selectedDateIsoKey, setSelectedDateIsoKey] = useState<string | null>(null);
+  const [draftDayNotes, setDraftDayNotes]           = useState<string[]>(["", "", "", "", ""]);
   const [pullAngle, setPullAngle]             = useState(0);
-  const [pullX, setPullX]                     = useState(0);
-  const [isPulled, setIsPulled]               = useState(false);
+  const [pullOffsetX, setPullOffsetX]         = useState(0);
+  const [isPullActive, setIsPullActive]       = useState(false);
   const [isWobbling, setIsWobbling]           = useState(false);
-  const [wobbleAmp, setWobbleAmp]             = useState(0);
+  const [wobbleAmplitude, setWobbleAmplitude] = useState(0);
 
-  const touchStartY    = useRef(0);
-  const mouseDownY     = useRef(0);
-  const mouseDownX     = useRef(0);
-  const dragging       = useRef(false);
-  const livePullAngle  = useRef(0);
-  const livePullX      = useRef(0);
+  const touchStartYRef = useRef(0);
+  const mouseDownYRef  = useRef(0);
+  const mouseDownXRef  = useRef(0);
+  const isDraggingRef  = useRef(false);
+  const livePullAngleRef = useRef(0);
+  const livePullXRef     = useRef(0);
   const wobbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentMonth = parseISO(currentMonthIso);
-  const monthKey     = format(currentMonth, "yyyy-MM");
-  const monthMemo    = (monthNotes[monthKey] || Array(6).fill("")) as string[];
-  const cells        = buildMonthCells(currentMonth);
-  const today        = new Date();
+  const currentMonthKey = format(currentMonth, "yyyy-MM");
+  const currentMonthNotes = (monthNotes[currentMonthKey] || Array(6).fill("")) as string[];
+  const visibleDates = buildVisibleMonthDates(currentMonth);
+  const today = new Date();
 
-  const beginFlip = (dir: 1 | -1) => {
-    if (phase !== "idle") return;
-    setPhase(dir > 0 ? "outNext" : "outPrev");
+  const startMonthFlip = (direction: 1 | -1) => {
+    if (flipPhase !== "idle") return;
+    setFlipPhase(direction > 0 ? "outNext" : "outPrev");
   };
 
-  const changeMonthImmediate = (dir: 1 | -1) => {
-    setCurrentMonth(dir > 0 ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1));
+  const changeMonthImmediately = (direction: 1 | -1) => {
+    setCurrentMonth(direction > 0 ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1));
   };
 
-  const handleAnimationEnd = () => {
-    if (phase === "outNext") { changeMonthImmediate(1);  setPhase("inNext");  return; }
-    if (phase === "outPrev") { changeMonthImmediate(-1); setPhase("inPrev");  return; }
-    if (phase === "inNext" || phase === "inPrev") setPhase("idle");
+  const handleFlipAnimationEnd = () => {
+    if (flipPhase === "outNext") {
+      changeMonthImmediately(1);
+      setFlipPhase("inNext");
+      return;
+    }
+
+    if (flipPhase === "outPrev") {
+      changeMonthImmediately(-1);
+      setFlipPhase("inPrev");
+      return;
+    }
+
+    if (flipPhase === "inNext" || flipPhase === "inPrev") {
+      setFlipPhase("idle");
+    }
   };
 
-  const openDay = (date: Date) => {
+  const openDayNotesModal = (date: Date) => {
     if (!isSameMonth(date, currentMonth)) return;
+
     const dateKey = format(date, "yyyy-MM-dd");
-    setSelectedDateKey(dateKey);
-    setDraftNotes(dayNotes[dateKey] || ["","","","",""]);
-    setOverlayOpen(true);
+    setSelectedDateIsoKey(dateKey);
+    setDraftDayNotes(dayNotes[dateKey] || ["", "", "", "", ""]);
+    setIsDayNotesModalOpen(true);
   };
 
-  const closeDay    = () => { setOverlayOpen(false); setSelectedDateKey(null); };
+  const closeDayNotesModal = () => {
+    setIsDayNotesModalOpen(false);
+    setSelectedDateIsoKey(null);
+  };
+
   const saveDayNotes = () => {
-    if (!selectedDateKey) return;
-    setFullDayNote(selectedDateKey, draftNotes);
-    closeDay();
+    if (!selectedDateIsoKey) return;
+
+    setFullDayNote(selectedDateIsoKey, draftDayNotes);
+    closeDayNotesModal();
   };
 
-  const updatePull = (clientX: number) => {
-    if (!dragging.current) return;
-    const dx    = clientX - mouseDownX.current;
-    const angle = Math.max(-8, Math.min(8, dx * 0.05));
-    const shift = Math.max(-12, Math.min(12, dx * 0.25));
-    livePullAngle.current = angle;
-    livePullX.current     = shift;
+  const updatePullGesture = (pointerX: number) => {
+    if (!isDraggingRef.current) return;
+
+    const deltaX = pointerX - mouseDownXRef.current;
+    const angle = Math.max(-8, Math.min(8, deltaX * 0.05));
+    const horizontalShift = Math.max(-12, Math.min(12, deltaX * 0.25));
+
+    livePullAngleRef.current = angle;
+    livePullXRef.current = horizontalShift;
+
     setPullAngle(angle);
-    setPullX(shift);
-    setIsPulled(true);
+    setPullOffsetX(horizontalShift);
+    setIsPullActive(true);
   };
 
-  const releasePull = () => {
-    const amp = Math.min(8, Math.abs(livePullAngle.current));
-    setPullAngle(0); setPullX(0); setIsPulled(false);
-    if (amp < 0.7) { livePullAngle.current = 0; livePullX.current = 0; return; }
-    setWobbleAmp(amp);
+  const releasePullGesture = () => {
+    const releaseAmplitude = Math.min(8, Math.abs(livePullAngleRef.current));
+
+    setPullAngle(0);
+    setPullOffsetX(0);
+    setIsPullActive(false);
+
+    if (releaseAmplitude < 0.7) {
+      livePullAngleRef.current = 0;
+      livePullXRef.current = 0;
+      return;
+    }
+
+    setWobbleAmplitude(releaseAmplitude);
     setIsWobbling(true);
+
     if (wobbleTimerRef.current) clearTimeout(wobbleTimerRef.current);
+
     wobbleTimerRef.current = setTimeout(() => {
-      setIsWobbling(false); setWobbleAmp(0);
+      setIsWobbling(false);
+      setWobbleAmplitude(0);
     }, 1800);
-    livePullAngle.current = 0; livePullX.current = 0;
+
+    livePullAngleRef.current = 0;
+    livePullXRef.current = 0;
   };
 
   useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => updatePull(e.clientX);
-    const onMouseUp   = (e: MouseEvent) => {
-      if (!dragging.current) return;
-      dragging.current = false;
-      releasePull();
-      const dy = mouseDownY.current - e.clientY;
-      if (Math.abs(dy) <= 70) return;
-      setPhase((prev) => prev !== "idle" ? prev : dy > 0 ? "outNext" : "outPrev");
+    const handleMouseMove = (event: MouseEvent) => updatePullGesture(event.clientX);
+
+    const handleMouseUp = (event: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+
+      isDraggingRef.current = false;
+      releasePullGesture();
+
+      const verticalDelta = mouseDownYRef.current - event.clientY;
+      if (Math.abs(verticalDelta) <= 70) return;
+
+      setFlipPhase((previousPhase) => {
+        if (previousPhase !== "idle") return previousPhase;
+        return verticalDelta > 0 ? "outNext" : "outPrev";
+      });
     };
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
       if (wobbleTimerRef.current) clearTimeout(wobbleTimerRef.current);
     };
   }, []);
 
-  const selectedDateObj = selectedDateKey ? parseISO(`${selectedDateKey}T00:00:00`) : null;
+  const selectedDate = selectedDateIsoKey ? parseISO(`${selectedDateIsoKey}T00:00:00`) : null;
 
   return (
-    <div className={styles.scene}>
-      {/* ── z0: BRICK WALL ── */}
+    <div className="relative flex h-[100dvh] flex-col items-center justify-start overflow-hidden bg-[#1e0e06] px-3 pt-4">
       <svg className={styles.brickBg} xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-hidden="true">
         <defs>
           <filter id="rough">
@@ -196,12 +240,10 @@ export function TrendyCalendar() {
         <rect width="100%" height="100%" fill="rgba(0,0,0,0.22)" />
       </svg>
 
-      {/* ── z1: ROOM DECOR ── */}
       <div className={styles.wallpaper} aria-hidden="true" />
       <div className={styles.roomFloor} aria-hidden="true" />
       <div className={styles.baseboard} aria-hidden="true" />
 
-      {/* Window */}
       <div className={styles.roomWindow} aria-hidden="true">
         {[
           { top:"14%", left:"18%", s:2, d:0   },
@@ -224,7 +266,6 @@ export function TrendyCalendar() {
       <div className={styles.curtainLeft}  aria-hidden="true" />
       <div className={styles.curtainRight} aria-hidden="true" />
 
-      {/* Bookshelf */}
       <div className={styles.bookShelf} aria-hidden="true">
         <div style={{ display:"flex", alignItems:"flex-end", gap:3, padding:"0 5px", position:"absolute", bottom:12, left:0, right:0 }}>
           {SHELF_BOOKS.map(([w, h, color], i) => (
@@ -234,14 +275,12 @@ export function TrendyCalendar() {
         <div className={styles.shelfBoard} />
       </div>
 
-      {/* Candle */}
       <div className={styles.candle} aria-hidden="true">
         <div className={styles.candleFlame} />
         <div className={styles.candleBody} />
       </div>
       <div className={styles.candleGlow} style={{ width:220, height:170, right:"calc(3% + 30px)", top:"calc(20% - 90px)" }} aria-hidden="true" />
 
-      {/* Plant */}
       <div className={styles.plantPot} aria-hidden="true">
         <div style={{ position:"relative", height:44 }}>
           <div style={{ position:"absolute", bottom:0, left:9,  width:28, height:18, background:"#2a6a20", borderRadius:"50% 0 50% 0", transform:"rotate(-35deg)", transformOrigin:"bottom center" }} />
@@ -252,7 +291,6 @@ export function TrendyCalendar() {
         <div className={styles.potBody} />
       </div>
 
-      {/* Dust motes */}
       <style>{`
         @keyframes dustFloat {
           0%   { transform:translateY(0) translateX(0);     opacity:0; }
@@ -266,7 +304,7 @@ export function TrendyCalendar() {
         }
       `}</style>
       <div style={{ position:"fixed", inset:0, zIndex:4, pointerEvents:"none", overflow:"hidden" }} aria-hidden="true">
-        {MOTE_DATA.map((m) => (
+        {DUST_MOTES.map((m) => (
           <div key={m.id} style={{
             position:"absolute", left:m.left, top:m.top,
             width:m.size, height:m.size,
@@ -276,12 +314,8 @@ export function TrendyCalendar() {
         ))}
       </div>
 
-      {/* ── z5: VIGNETTE ── */}
       <div className={styles.wallVignette} aria-hidden="true" />
 
-      {/* ════════════════════════════════════════
-          z10: CALENDAR — always on top
-          ════════════════════════════════════════ */}
       <div className={styles.hanger} aria-hidden="true">
         <div className={styles.hook} />
         <div className={styles.wireRow}>
@@ -292,11 +326,11 @@ export function TrendyCalendar() {
       </div>
 
       <div
-        className={`${styles.calStack} ${isPulled ? styles.calStackPulled : ""} ${isWobbling ? styles.calStackWobble : ""}`}
+        className={`${styles.calStack} ${isPullActive ? styles.calStackPulled : ""} ${isWobbling ? styles.calStackWobble : ""}`}
         style={{
           "--pull-angle":   `${pullAngle}deg`,
-          "--pull-x":       `${pullX}px`,
-          "--wobble-angle": `${wobbleAmp}deg`,
+          "--pull-x":       `${pullOffsetX}px`,
+          "--wobble-angle": `${wobbleAmplitude}deg`,
         } as React.CSSProperties}
       >
         <div className={`${styles.pageBack} ${styles.pageBack1}`} />
@@ -305,77 +339,82 @@ export function TrendyCalendar() {
 
         <div className={styles.flipPerspective}>
           <section
-            className={`${styles.calPage} ${getFlipClass(phase)}`}
-            onAnimationEnd={handleAnimationEnd}
+            className={`${styles.calPage} ${getFlipAnimationClass(flipPhase)}`}
+            onAnimationEnd={handleFlipAnimationEnd}
             onTouchStart={(e) => {
-              touchStartY.current  = e.touches[0].clientY;
-              mouseDownX.current   = e.touches[0].clientX;
+              touchStartYRef.current = e.touches[0].clientY;
+              mouseDownXRef.current = e.touches[0].clientX;
               setIsWobbling(false);
               if (wobbleTimerRef.current) clearTimeout(wobbleTimerRef.current);
-              dragging.current = true;
+              isDraggingRef.current = true;
             }}
-            onTouchMove={(e) => updatePull(e.touches[0].clientX)}
+            onTouchMove={(e) => updatePullGesture(e.touches[0].clientX)}
             onTouchEnd={(e) => {
-              dragging.current = false;
-              releasePull();
-              const dy = touchStartY.current - e.changedTouches[0].clientY;
-              if (Math.abs(dy) <= 55) return;
-              beginFlip(dy > 0 ? 1 : -1);
+              isDraggingRef.current = false;
+              releasePullGesture();
+              const verticalDelta = touchStartYRef.current - e.changedTouches[0].clientY;
+              if (Math.abs(verticalDelta) <= 55) return;
+              startMonthFlip(verticalDelta > 0 ? 1 : -1);
             }}
             onMouseDown={(e) => {
-              mouseDownY.current = e.clientY;
-              mouseDownX.current = e.clientX;
-              dragging.current   = true;
+              mouseDownYRef.current = e.clientY;
+              mouseDownXRef.current = e.clientX;
+              isDraggingRef.current = true;
               setIsWobbling(false);
               if (wobbleTimerRef.current) clearTimeout(wobbleTimerRef.current);
             }}
             onKeyDown={(e) => {
-              if (e.key === "ArrowLeft")  beginFlip(-1);
-              if (e.key === "ArrowRight") beginFlip(1);
+              if (e.key === "ArrowLeft") startMonthFlip(-1);
+              if (e.key === "ArrowRight") startMonthFlip(1);
             }}
             tabIndex={0}
             aria-label="Monthly planner calendar"
           >
-            {/* HERO */}
-            <div className={styles.calHero}>
+            <div className="relative h-[clamp(130px,28vw,200px)] overflow-hidden rounded-none border-b-[3px] border-b-[rgba(220,140,40,0.6)] bg-[#1c0f07]">
               <div className={styles.heroBgBlur} style={{ backgroundImage: "url('/portrait.png')" }} />
               <div className={styles.heroPattern} />
               <div className={styles.heroOverlay} />
-              <div className={styles.heroLeft}>
-                <div className={styles.heroEyebrow}>Monthly Planner</div>
-                <div className={styles.heroMonth}>{format(currentMonth, "MMMM")}</div>
-                <div className={styles.heroYear}>{format(currentMonth, "yyyy")}</div>
-                <div className={styles.heroNav}>
-                  <button className={styles.navBtn} onClick={() => beginFlip(-1)} aria-label="Previous month">
+              <div className="absolute inset-y-0 left-0 z-[5] flex max-w-[65%] flex-col justify-center px-5 py-4">
+                <div className="mb-1 font-['Caveat_Brush'] text-[clamp(9px,2vw,12px)] uppercase tracking-[0.2em] text-[#df8c2c]">Monthly Planner</div>
+                <div className="mb-1.5 font-['Caveat_Brush'] text-[clamp(28px,7vw,52px)] leading-none text-[#fdf6e3]">{format(currentMonth, "MMMM")}</div>
+                <div className="font-['Caveat'] text-[clamp(13px,3vw,20px)] tracking-[0.15em] text-[rgba(253,246,227,0.55)]">{format(currentMonth, "yyyy")}</div>
+                <div className="mt-2.5 flex gap-2">
+                  <button
+                    className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border-[1.5px] border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.1)] text-[#fdf6e3] transition-all duration-150 hover:scale-105 hover:bg-[rgba(255,255,255,0.22)] active:scale-95 active:bg-[rgba(255,255,255,0.3)]"
+                    onClick={() => startMonthFlip(-1)}
+                    aria-label="Previous month"
+                  >
                     <ChevronLeft size={20} />
                   </button>
-                  <button className={styles.navBtn} onClick={() => beginFlip(1)} aria-label="Next month">
+                  <button
+                    className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border-[1.5px] border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.1)] text-[#fdf6e3] transition-all duration-150 hover:scale-105 hover:bg-[rgba(255,255,255,0.22)] active:scale-95 active:bg-[rgba(255,255,255,0.3)]"
+                    onClick={() => startMonthFlip(1)}
+                    aria-label="Next month"
+                  >
                     <ChevronRight size={20} />
                   </button>
                 </div>
               </div>
               <div className={styles.heroCenterWord} aria-hidden="true">TUF</div>
-              
-              {/* Added fallback to ensure next.js can load standard imgs without error */}
+
               <img src="/portrait.png" alt="Portrait" className={styles.heroPortrait} />
-              
+
               <div className={styles.heroSwipeHint}>Use left/right icons or drag to flip pages</div>
             </div>
 
-            {/* BODY */}
-            <div className={styles.calBody}>
-              <aside className={styles.notesCol}>
-                <div className={styles.notesLabel}>Monthly notes</div>
-                <div className={styles.noteLinesList}>
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_2.2fr]">
+              <aside className="flex flex-col border-b-[1.5px] border-b-[rgba(150,110,50,0.35)] border-dashed px-4 py-3.5 md:border-b-0 md:border-r-[1.5px] md:border-r-[rgba(150,110,50,0.35)]">
+                <div className="mb-2.5 text-[9px] font-bold uppercase tracking-[0.22em] text-[#a07840]">Monthly notes</div>
+                <div className="flex flex-1 flex-col">
                   {Array.from({ length: 6 }).map((_, idx) => (
-                    <div key={idx} className={styles.noteLineItem}>
-                      <div className={styles.noteBullet} />
+                    <div key={idx} className="flex items-center gap-1.5 border-b border-b-[rgba(150,110,50,0.28)] px-0.5 py-1.5">
+                      <div className="h-[5px] w-[5px] shrink-0 rounded-full bg-[#df8c2c] opacity-70" />
                       <input
-                        className={styles.noteInp}
+                        className="w-full bg-transparent font-[var(--font-geist-sans),Arial,sans-serif] text-[clamp(11px,2.4vw,13px)] text-[#3a2a10] outline-none placeholder:text-[#c0a870]"
                         type="text"
-                        value={monthMemo[idx] || ""}
+                        value={currentMonthNotes[idx] || ""}
                         placeholder={idx === 0 ? "Add a note..." : "..."}
-                        onChange={(e) => setMonthNote(monthKey, idx, e.target.value)}
+                        onChange={(e) => setMonthNote(currentMonthKey, idx, e.target.value)}
                         onMouseDown={(e) => e.stopPropagation()}
                         onTouchStart={(e) => e.stopPropagation()}
                         aria-label={`Monthly note line ${idx + 1}`}
@@ -385,26 +424,29 @@ export function TrendyCalendar() {
                 </div>
               </aside>
 
-              <div className={styles.gridCol}>
-                <div className={styles.dayNames}>
+              <div className="px-3 py-2.5 md:py-3">
+                <div className="mb-1 grid grid-cols-7">
                   {DAY_NAMES.map((day, idx) => (
-                    <div key={day} className={`${styles.dayName} ${idx === 0 ? styles.sun : ""}`}>
+                    <div
+                      key={day}
+                      className={`py-0.5 text-center text-[clamp(9px,2.2vw,11px)] font-bold tracking-[0.04em] text-[#8a6a3a] ${idx === 0 ? "text-[#b83020]" : ""}`}
+                    >
                       {day}
                     </div>
                   ))}
                 </div>
-                <div className={styles.calGrid}>
-                  {cells.map((date, idx) => {
+                <div className="grid grid-cols-7 gap-px">
+                  {visibleDates.map((date, idx) => {
                     const dateKey = format(date, "yyyy-MM-dd");
                     const inMonth = isSameMonth(date, currentMonth);
                     const isToday = isSameDay(date, today);
                     const hasNote = (dayNotes[dateKey] || []).some((n) => n.trim().length > 0);
                     const col     = idx % 7;
                     return (
-                      <div key={dateKey} className={`${styles.dayCell} ${col === 0 ? styles.sunCol : ""}`}>
+                      <div key={dateKey} className={`flex aspect-square items-center justify-center ${col === 0 ? styles.sunCol : ""}`}>
                         <button
-                          className={`${styles.dayBtn} ${!inMonth ? styles.other : ""} ${isToday ? styles.today : ""} ${hasNote ? styles.hasNote : ""}`}
-                          onClick={() => openDay(date)}
+                          className={`flex min-h-11 min-w-11 aspect-square w-[min(90%,48px)] items-center justify-center rounded-[5px] border-none bg-transparent font-['Caveat'] text-[clamp(12px,3vw,16px)] font-semibold text-[#3a2a10] transition-all duration-[120ms] hover:bg-[rgba(223,140,44,0.18)] disabled:cursor-default ${!inMonth ? styles.other : ""} ${isToday ? styles.today : ""} ${hasNote ? styles.hasNote : ""}`}
+                          onClick={() => openDayNotesModal(date)}
                           disabled={!inMonth}
                           aria-label={format(date, "EEEE, MMMM d, yyyy")}
                         >
@@ -420,34 +462,46 @@ export function TrendyCalendar() {
         </div>
       </div>
 
-      {/* MODAL */}
-      {overlayOpen && (
-        <div className={styles.overlay} onClick={closeDay}>
-          <div className={styles.notepadModal} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.closeBtn} onClick={closeDay} aria-label="Close notes">×</button>
-            <div className={styles.modalSub}>Daily agenda</div>
-            <div className={styles.modalDate}>
-              {selectedDateObj ? format(selectedDateObj, "MMMM d, yyyy") : ""}
+      {isDayNotesModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[rgba(15,7,3,0.75)] p-4 backdrop-blur-[5px]" onClick={closeDayNotesModal}>
+          <div
+            className="relative w-full max-w-[360px] rounded-[14px] border-2 border-[rgba(150,110,50,0.45)] bg-[#fdf6e3] p-[22px] shadow-[0_24px_70px_rgba(0,0,0,0.55)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="absolute right-3.5 top-3 border-none bg-transparent text-[20px] leading-none text-[#8a6a3a]" onClick={closeDayNotesModal} aria-label="Close notes">×</button>
+            <div className="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#a07840]">Daily agenda</div>
+            <div className="mb-4 font-['Caveat_Brush'] text-2xl text-[#3a2a10]">
+              {selectedDate ? format(selectedDate, "MMMM d, yyyy") : ""}
             </div>
-            <div className={styles.modalLines}>
+            <div className="flex flex-col">
               {["What's the plan?", "...", "...", "...", "..."].map((ph, idx) => (
                 <input
                   key={idx}
-                  className={styles.modalInp}
-                  value={draftNotes[idx] || ""}
+                  className="w-full border-x-0 border-b-[1.2px] border-t-0 border-b-[rgba(150,110,50,0.3)] bg-transparent px-1 py-[9px] font-[var(--font-geist-sans),Arial,sans-serif] text-sm text-[#3a2a10] outline-none placeholder:text-[#c0a870]"
+                  value={draftDayNotes[idx] || ""}
                   placeholder={ph}
                   onChange={(e) => {
-                    const next = [...draftNotes];
-                    next[idx] = e.target.value;
-                    setDraftNotes(next);
+                    const updatedDraftNotes = [...draftDayNotes];
+                    updatedDraftNotes[idx] = e.target.value;
+                    setDraftDayNotes(updatedDraftNotes);
                   }}
                   aria-label={`Daily note line ${idx + 1}`}
                 />
               ))}
             </div>
-            <div className={styles.modalActions}>
-              <button className={styles.btnCancel} onClick={closeDay}>Cancel</button>
-              <button className={styles.btnSave} onClick={saveDayNotes}>Save</button>
+            <div className="mt-[18px] flex justify-end gap-2">
+              <button
+                className="cursor-pointer rounded-[20px] border-[1.5px] border-[rgba(150,110,50,0.4)] bg-transparent px-4 py-2 font-['Caveat_Brush'] text-[15px] tracking-[0.05em] text-[#8a6a3a]"
+                onClick={closeDayNotesModal}
+              >
+                Cancel
+              </button>
+              <button
+                className="cursor-pointer rounded-[20px] border-none bg-[#df8c2c] px-[22px] py-2 font-['Caveat_Brush'] text-[15px] tracking-[0.05em] text-white shadow-[0_3px_14px_rgba(223,140,44,0.45)]"
+                onClick={saveDayNotes}
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>

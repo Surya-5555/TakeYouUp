@@ -1,19 +1,3 @@
-/* TrendyCalendar.module.css */
-
-/* ─── SCENE ─── */
-.scene {
-  min-height: 100dvh;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 16px 12px 60px;
-  overflow-x: hidden;
-  background: #1e0e06;
-}
-
-/* ─── BRICK BG ─── */
 .brickBg {
   position: fixed;
   inset: 0;
@@ -21,7 +5,6 @@
   pointer-events: none;
 }
 
-/* ─── ROOM DECOR (all z-index 1-4, pointer-events:none) ─── */
 .roomFloor {
   position: fixed;
   bottom: 0;
@@ -278,7 +261,6 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* ─── VIGNETTE (z-index 5, no pointer events) ─── */
 .wallVignette {
   position: fixed;
   inset: 0;
@@ -287,7 +269,6 @@
   background: radial-gradient(ellipse at 50% 35%, transparent 20%, rgba(5, 2, 0, 0.68) 100%);
 }
 
-/* ─── HANGER (z-index 10) ─── */
 .hanger {
   position: relative;
   z-index: 10;
@@ -392,7 +373,6 @@
   opacity: 0.95;
 }
 
-/* ─── CALENDAR STACK (z-index 10) ─── */
 .calStack {
   position: relative;
   z-index: 10;
@@ -432,7 +412,6 @@
   100% { transform: translateX(0px) rotate(0deg); }
 }
 
-/* ─── PAGE BACKS ─── */
 .pageBack {
   position: absolute;
   border-radius: 0 0 14px 14px;
@@ -491,7 +470,6 @@
   outline: none;
 }
 
-/* ─── FLIP ANIMATIONS ────────────────────────────────────────────── */
 @keyframes pageFlipForward {
   0%   { transform: perspective(1400px) rotateX(0deg)   scaleY(1);    opacity: 1;    box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
   35%  { transform: perspective(1400px) rotateX(-38deg) scaleY(0.88); opacity: 0.92; box-shadow: 0 32px 72px rgba(0,0,0,0.65); }
@@ -534,16 +512,6 @@
   .flipInNext,  .flipInPrev  { animation-duration: 0.42s; }
 }
 
-/* ─── HERO ─── */
-.calHero {
-  position: relative;
-  background: #1c0f07;
-  overflow: hidden;
-  height: clamp(130px, 28vw, 200px);
-  border-bottom: 3px solid rgba(220, 140, 40, 0.6);
-  border-radius: 0;
-}
-
 .heroBgBlur {
   position: absolute;
   inset: 0;
@@ -569,78 +537,6 @@
   background: linear-gradient(90deg, rgba(20,10,4,0.95) 0%, rgba(20,10,4,0.6) 50%, rgba(20,10,4,0.1) 100%);
 }
 
-.heroLeft {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 16px 20px;
-  z-index: 5;
-  max-width: 65%;
-}
-
-.heroEyebrow {
-  font-family: "Caveat Brush", cursive;
-  font-size: clamp(9px, 2vw, 12px);
-  letter-spacing: 0.2em;
-  color: #df8c2c;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.heroMonth {
-  font-family: "Caveat Brush", cursive;
-  font-size: clamp(28px, 7vw, 52px);
-  color: #fdf6e3;
-  line-height: 1;
-  margin-bottom: 6px;
-}
-
-.heroYear {
-  font-family: "Caveat", cursive;
-  font-size: clamp(13px, 3vw, 20px);
-  color: rgba(253, 246, 227, 0.55);
-  letter-spacing: 0.15em;
-}
-
-.heroNav {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.navBtn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  border-radius: 8px;
-  color: #fdf6e3;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.navBtn:hover  { background: rgba(255,255,255,0.22); transform: scale(1.06); }
-.navBtn:active { background: rgba(255,255,255,0.3);  transform: scale(0.94); }
-
-.heroDeco {
-  position: absolute;
-  right: 18px; top: 50%;
-  transform: translateY(-50%);
-  font-family: "Caveat Brush", cursive;
-  font-size: clamp(55px, 14vw, 90px);
-  color: #df8c2c;
-  opacity: 0.1;
-  line-height: 1;
-  pointer-events: none;
-  z-index: 2;
-  user-select: none;
-}
-
 .heroCenterWord {
   position: absolute;
   left: 50%;
@@ -659,10 +555,6 @@
   z-index: 3;
 }
 
-/* ─── FIX #2: HERO PORTRAIT ────────────────────────────────────────
-   Added strict width/max-width constraints so `object-fit: contain`
-   doesn't collapse the image bounding box to 0. 
-   ──────────────────────────────────────────────────────────────── */
 .heroPortrait {
   position: absolute;
   right: 0; bottom: 0;
@@ -691,205 +583,10 @@
   z-index: 6;
 }
 
-/* ─── BODY ─── */
-.calBody {
-  display: grid;
-  grid-template-columns: 1fr 2.2fr;
-}
-
-.notesCol {
-  padding: 14px 14px 14px 16px;
-  border-right: 1.5px dashed rgba(150, 110, 50, 0.35);
-  display: flex;
-  flex-direction: column;
-}
-
-.notesLabel {
-  font-size: 9px;
-  font-weight: 700;
-  color: #a07840;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.noteLinesList {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.noteLineItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border-bottom: 1.2px solid rgba(150, 110, 50, 0.28);
-  padding: 6px 2px;
-}
-
-.noteBullet {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #df8c2c;
-  flex-shrink: 0;
-  opacity: 0.7;
-}
-
-.noteInp {
-  background: transparent;
-  border: none;
-  outline: none;
-  font-family: var(--font-geist-sans), Arial, sans-serif;
-  font-size: clamp(11px, 2.4vw, 13px);
-  color: #3a2a10;
-  width: 100%;
-}
-
-.noteInp::placeholder { color: #c0a870; }
-
-.gridCol { padding: 10px 12px 12px; }
-
-.dayNames {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 4px;
-}
-
-.dayName {
-  text-align: center;
-  font-size: clamp(9px, 2.2vw, 11px);
-  font-weight: 700;
-  color: #8a6a3a;
-  letter-spacing: 0.04em;
-  padding: 2px 0;
-}
-
-.sun { color: #b83020; }
-
-.calGrid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-}
-
-.dayCell {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dayBtn {
-  width: min(90%, 48px);
-  aspect-ratio: 1;
-  min-width: 44px;
-  min-height: 44px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 5px;
-  font-family: "Caveat", cursive;
-  font-size: clamp(12px, 3vw, 16px);
-  font-weight: 600;
-  color: #3a2a10;
-  transition: all 0.12s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dayBtn:hover    { background: rgba(223, 140, 44, 0.18); }
-.dayBtn:disabled { cursor: default; }
-
 .other   { color: #c0a870; opacity: 0.45; }
 .today   { background: rgba(223, 140, 44, 0.22); color: #7a4a08; font-weight: 700; }
 .hasNote { background: #df8c2c; color: #fff; font-weight: 700; border-radius: 6px; box-shadow: 0 1px 6px rgba(223,140,44,0.4); }
 
-.sunCol .dayBtn             { color: #b83020; }
-.sunCol .dayBtn.hasNote,
-.sunCol .dayBtn.today       { color: #fff; }
-
-/* ─── MODAL ─── */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 7, 3, 0.75);
-  backdrop-filter: blur(5px);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
-.notepadModal {
-  background: #fdf6e3;
-  border-radius: 14px;
-  width: min(360px, 100%);
-  padding: 22px;
-  position: relative;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
-  border: 2px solid rgba(150, 110, 50, 0.45);
-}
-
-.modalSub  { font-size: 10px; color: #a07840; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 4px; }
-.modalDate { font-family: "Caveat Brush", cursive; font-size: 24px; color: #3a2a10; margin-bottom: 16px; }
-.modalLines { display: flex; flex-direction: column; }
-
-.modalInp {
-  background: transparent;
-  border: none;
-  border-bottom: 1.2px solid rgba(150, 110, 50, 0.3);
-  padding: 9px 4px;
-  font-family: var(--font-geist-sans), Arial, sans-serif;
-  font-size: 14px;
-  color: #3a2a10;
-  outline: none;
-  width: 100%;
-}
-
-.modalInp::placeholder { color: #c0a870; }
-
-.modalActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
-
-.btnCancel {
-  background: transparent;
-  border: 1.5px solid rgba(150, 110, 50, 0.4);
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-family: "Caveat Brush", cursive;
-  font-size: 15px;
-  letter-spacing: 0.05em;
-  color: #8a6a3a;
-  cursor: pointer;
-}
-
-.btnSave {
-  background: #df8c2c;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 22px;
-  font-family: "Caveat Brush", cursive;
-  font-size: 15px;
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 3px 14px rgba(223, 140, 44, 0.45);
-  letter-spacing: 0.05em;
-}
-
-.closeBtn {
-  position: absolute;
-  top: 12px; right: 14px;
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: #8a6a3a;
-  cursor: pointer;
-  line-height: 1;
-}
-
-@media (max-width: 500px) {
-  .calBody  { grid-template-columns: 1fr; }
-  .notesCol { border-right: none; border-bottom: 1.5px dashed rgba(150,110,50,0.35); padding-bottom: 10px; }
-}
+.sunCol button        { color: #b83020; }
+.sunCol button.hasNote,
+.sunCol button.today  { color: #fff; }
