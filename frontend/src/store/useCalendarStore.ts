@@ -19,7 +19,7 @@ type PersistedCalendarState = Partial<Pick<CalendarState, "currentMonth" | "rang
 
 const LEGACY_DEFAULT_MONTH = new Date(2021, 0, 1).toISOString();
 
-function getCurrentMonthIso(): string {
+export function getCurrentMonthIso(): string {
   const now = new Date();
   // Use mid-month noon to avoid timezone edge cases crossing month boundaries.
   return new Date(now.getFullYear(), now.getMonth(), 15, 12, 0, 0, 0).toISOString();
@@ -72,6 +72,10 @@ export const useCalendarStore = create<CalendarState>()(
       name: "calendar-store",
       storage: createJSONStorage(() => localStorage),
       version: 2,
+      partialize: (state) => {
+        const { currentMonth, ...rest } = state;
+        return rest;
+      },
       migrate: (persistedState, _version) => {
         const state = (persistedState as PersistedCalendarState) || {};
         const currentMonth =

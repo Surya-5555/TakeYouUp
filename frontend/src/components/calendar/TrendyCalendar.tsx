@@ -15,7 +15,7 @@ import {
   subMonths,
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCalendarStore } from "@/store/useCalendarStore";
+import { useCalendarStore, getCurrentMonthIso } from "@/store/useCalendarStore";
 import styles from "./TrendyCalendar.module.css";
 
 type CalendarFlipPhase = "idle" | "outNext" | "outPrev" | "inNext" | "inPrev";
@@ -98,6 +98,14 @@ export function TrendyCalendar() {
   const currentMonthNotes = (monthNotes[currentMonthKey] || Array(6).fill("")) as string[];
   const visibleDates = buildVisibleMonthDates(currentMonth);
   const today = new Date();
+  
+  // Force reset to current month on initial mount/rehydration
+  useEffect(() => {
+    const now = getCurrentMonthIso();
+    if (currentMonthIso !== now) {
+      setCurrentMonth(new Date());
+    }
+  }, []); // Only on first mount
 
   const startMonthFlip = (direction: 1 | -1) => {
     if (flipPhase !== "idle") return;
@@ -199,7 +207,7 @@ export function TrendyCalendar() {
       releasePullGesture();
 
       const verticalDelta = mouseDownYRef.current - event.clientY;
-      if (Math.abs(verticalDelta) <= 85) return;
+      if (Math.abs(verticalDelta) <= 75) return;
 
       setFlipPhase((previousPhase) => {
         if (previousPhase !== "idle") return previousPhase;
@@ -353,7 +361,7 @@ export function TrendyCalendar() {
               isDraggingRef.current = false;
               releasePullGesture();
               const verticalDelta = touchStartYRef.current - e.changedTouches[0].clientY;
-              if (Math.abs(verticalDelta) <= 85) return;
+              if (Math.abs(verticalDelta) <= 75) return;
               startMonthFlip(verticalDelta > 0 ? 1 : -1);
             }}
             onMouseDown={(e) => {
@@ -432,9 +440,6 @@ export function TrendyCalendar() {
                         value={currentMonthNotes[idx] || ""}
                         placeholder={idx === 0 ? "Add a note..." : "..."}
                         onChange={(e) => setMonthNote(currentMonthKey, idx, e.target.value)}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
-                        onTouchEnd={(e) => e.stopPropagation()}
                         aria-label={`Monthly note line ${idx + 1}`}
                       />
                     </div>
@@ -468,10 +473,6 @@ export function TrendyCalendar() {
                             e.stopPropagation();
                             openDayNotesModal(date);
                           }}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onTouchStart={(e) => e.stopPropagation()}
-                          onTouchMove={(e) => e.stopPropagation()}
-                          onTouchEnd={(e) => e.stopPropagation()}
                           disabled={!inMonth}
                           aria-label={format(date, "EEEE, MMMM d, yyyy")}
                         >
