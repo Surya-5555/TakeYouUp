@@ -12,14 +12,15 @@ interface CalendarState {
   setRangeEnd: (date: Date | null) => void;
   setMonthNote: (monthKey: string, index: number, content: string) => void;
   setDayNote: (dateKey: string, lineIndex: number, content: string) => void;
+  setFullDayNote: (dateKey: string, notes: string[]) => void;
 }
 
 export const useCalendarStore = create<CalendarState>()(
   persist(
     (set) => ({
       currentMonth: new Date(2021, 0, 1).toISOString(),
-      rangeStart: new Date(2021, 0, 10).toISOString(),
-      rangeEnd: new Date(2021, 0, 20).toISOString(),
+      rangeStart: null,
+      rangeEnd: null,
       monthNotes: {},
       dayNotes: {},
       setCurrentMonth: (date: Date) => set({ currentMonth: date.toISOString() }),
@@ -49,6 +50,13 @@ export const useCalendarStore = create<CalendarState>()(
             },
           };
         }),
+      setFullDayNote: (dateKey: string, notes: string[]) =>
+        set((state) => ({
+          dayNotes: {
+            ...state.dayNotes,
+            [dateKey]: notes,
+          },
+        })),
     }),
     {
       name: "calendar-store",

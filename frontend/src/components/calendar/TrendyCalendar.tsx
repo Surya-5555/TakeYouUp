@@ -19,14 +19,32 @@ export function TrendyCalendar() {
     setRangeStart,
     setRangeEnd,
     setMonthNote,
-    setDayNote
+    setDayNote,
+    setFullDayNote
   } = useCalendarStore();
 
   const [hasMounted, setHasMounted] = React.useState(false);
+  const [draftNotes, setDraftNotes] = useState<string[]>(["", "", "", "", ""]);
 
   React.useEffect(() => {
     setHasMounted(true);
   }, []);
+
+  // Sync draftNotes when a day is opened
+  React.useEffect(() => {
+    if (rangeStartObj) {
+      const key = format(rangeStartObj, "yyyy-MM-dd");
+      setDraftNotes(dayNotes[key] || ["", "", "", "", ""]);
+    }
+  }, [startStr, dayNotes]); // startStr is the trigger
+
+  const handleSaveDayNotes = () => {
+    if (rangeStartObj) {
+      const key = format(rangeStartObj, "yyyy-MM-dd");
+      setFullDayNote(key, draftNotes);
+      setRangeStart(null);
+    }
+  };
 
   const [direction, setDirection] = useState(0);
 
@@ -37,18 +55,18 @@ export function TrendyCalendar() {
 
   const currentMonth = parseISO(curMonthStr);
   const currentMonthKey = format(currentMonth, "yyyy-MM");
-  const rangeStart = startStr ? parseISO(startStr) : null;
-  const rangeEnd = endStr ? parseISO(endStr) : null;
+  const rangeStartObj = startStr ? parseISO(startStr) : null;
+  const rangeEndObj = endStr ? parseISO(endStr) : null;
 
   const monthNotesData = (monthNotes[currentMonthKey] || ["", "", "", ""]).slice(0, 4);
   const rows = generateCalendarGrid(currentMonth);
 
   const handleDateClick = (date: Date) => {
-    if (!rangeStart || (rangeStart && rangeEnd)) {
+    if (!startStr || (startStr && endStr)) {
       setRangeStart(date);
       setRangeEnd(null);
-    } else if (rangeStart && !rangeEnd) {
-      if (isBefore(date, rangeStart)) {
+    } else if (rangeStartObj && !rangeEndObj) {
+      if (isBefore(date, rangeStartObj)) {
         setRangeStart(date);
       } else {
         setRangeEnd(date);
@@ -57,12 +75,12 @@ export function TrendyCalendar() {
   };
 
   const isInRange = (date: Date) => {
-    if (!rangeStart || !rangeEnd) return false;
-    return isAfter(date, rangeStart) && isBefore(date, rangeEnd);
+    if (!rangeStartObj || !rangeEndObj) return false;
+    return isAfter(date, rangeStartObj) && isBefore(date, rangeEndObj);
   };
 
   const isSelected = (date: Date) => {
-    return (rangeStart && isSameDay(date, rangeStart)) || (rangeEnd && isSameDay(date, rangeEnd));
+    return (rangeStartObj && isSameDay(date, rangeStartObj)) || (rangeEndObj && isSameDay(date, rangeEndObj));
   };
 
   if (!hasMounted) return null;
@@ -215,9 +233,6 @@ export function TrendyCalendar() {
 
                 <div className="flex flex-col">
                   {rows.map((week, weekIndex) => {
-                    const isWeekSelected = week.some(d => (rangeStart && isSameDay(d, rangeStart)) || (rangeEnd && isSameDay(d, rangeEnd)));
-                    const currentOpenDate = (rangeEnd && isWeekSelected) ? rangeEnd : (rangeStart && isWeekSelected ? rangeStart : null);
-
                     return (
                       <React.Fragment key={weekIndex}>
                         <div className="grid grid-cols-7 px-1 py-0 relative z-20 bg-[#313235]">
@@ -263,7 +278,7 @@ export function TrendyCalendar() {
 
       {/* Daily Agenda Popup */}
       <AnimatePresence>
-        {rangeStart && !rangeEnd && (
+        {startStr && !endStr && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             {/* Backdrop */}
             <motion.div
@@ -281,13 +296,11 @@ export function TrendyCalendar() {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               className="bg-[#fcfaf2] w-full max-w-[400px] rounded-2xl p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative border border-black/5 overflow-hidden"
             >
-
-
               <div className="relative">
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Today's Agenda</h4>
-                    <p className="text-[18px] font-serif font-bold text-gray-800">{format(rangeStart, "MMMM do, yyyy")}</p>
+                    <p className="text-[18px] font-serif font-bold text-gray-800">{rangeStartObj && format(rangeStartObj, "MMMM do, yyyy")}</p>
                   </div>
                   <button
                     onClick={() => setRangeStart(null)}
@@ -298,23 +311,24 @@ export function TrendyCalendar() {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => {
-                    const key = format(rangeStart, "yyyy-MM-dd");
-                    return (
-                      <input
-                        key={i}
-                        defaultValue={dayNotes[key]?.[i] || ""}
-                        onBlur={(e) => setDayNote(key, i, e.target.value)}
-                        placeholder={i === 0 ? "What's the plan?" : "..."}
-                        className="w-full bg-transparent border-b border-black/20 h-10 text-black/80 focus:outline-none focus:border-black/50 placeholder:text-black/30 font-serif text-[16px] transition-colors"
-                      />
-                    );
-                  })}
+                  {draftNotes.map((val, i) => (
+                    <input
+                      key={i}
+                      value={val}
+                      onChange={(e) => {
+                        const next = [...draftNotes];
+                        next[i] = e.target.value;
+                        setDraftNotes(next);
+                      }}
+                      placeholder={i === 0 ? "What's the plan?" : "..."}
+                      className="w-full bg-transparent border-b border-black/20 h-10 text-black/80 focus:outline-none focus:border-black/50 placeholder:text-black/30 font-serif text-[16px] transition-colors"
+                    />
+                  ))}
                 </div>
 
                 <div className="mt-8 flex justify-end">
                   <button
-                    onClick={() => setRangeStart(null)}
+                    onClick={handleSaveDayNotes}
                     className="bg-[#df8c2c] text-white px-6 py-2 rounded-full text-[12px] font-black uppercase tracking-widest shadow-lg shadow-[#df8c2c]/30 hover:scale-105 transition-transform"
                   >
                     Save Note
