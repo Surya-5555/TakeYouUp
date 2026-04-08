@@ -98,6 +98,16 @@ export function TrendyCalendar() {
   const cells        = buildMonthCells(currentMonth);
   const today        = new Date();
 
+  useEffect(() => {
+    const now = new Date();
+    const sameMonth =
+      currentMonth.getFullYear() === now.getFullYear() &&
+      currentMonth.getMonth() === now.getMonth();
+
+    if (sameMonth) return;
+    setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 15, 12, 0, 0, 0));
+  }, [currentMonth, setCurrentMonth]);
+
   const beginFlip = (dir: 1 | -1) => {
     if (phase !== "idle") return;
     setPhase(dir > 0 ? "outNext" : "outPrev");

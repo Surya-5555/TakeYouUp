@@ -17,10 +17,18 @@ interface CalendarState {
 
 type PersistedCalendarState = Partial<Pick<CalendarState, "currentMonth" | "rangeStart" | "rangeEnd" | "monthNotes" | "dayNotes">>;
 
+const LEGACY_DEFAULT_MONTH = new Date(2021, 0, 1).toISOString();
+
+function getCurrentMonthIso(): string {
+  const now = new Date();
+  // Use mid-month noon to avoid timezone edge cases crossing month boundaries.
+  return new Date(now.getFullYear(), now.getMonth(), 15, 12, 0, 0, 0).toISOString();
+}
+
 export const useCalendarStore = create<CalendarState>()(
   persist(
     (set) => ({
-      currentMonth: new Date(2021, 0, 1).toISOString(),
+      currentMonth: getCurrentMonthIso(),
       rangeStart: null,
       rangeEnd: null,
       monthNotes: {},
@@ -63,12 +71,16 @@ export const useCalendarStore = create<CalendarState>()(
     {
       name: "calendar-store",
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
       migrate: (persistedState, _version) => {
         const state = (persistedState as PersistedCalendarState) || {};
+        const currentMonth =
+          !state.currentMonth || state.currentMonth === LEGACY_DEFAULT_MONTH
+            ? getCurrentMonthIso()
+            : state.currentMonth;
 
         return {
-          currentMonth: state.currentMonth ?? new Date(2021, 0, 1).toISOString(),
+          currentMonth,
           rangeStart: state.rangeStart ?? null,
           rangeEnd: state.rangeEnd ?? null,
           monthNotes: state.monthNotes ?? {},
