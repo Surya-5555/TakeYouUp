@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   addDays,
   addMonths,
@@ -9,13 +9,17 @@ import {
   format,
   isSameDay,
   isSameMonth,
+  isAfter,
+  isBefore,
   parseISO,
   startOfMonth,
   startOfWeek,
   subMonths,
+  eachDayOfInterval,
 } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarRange } from "lucide-react";
 import { useCalendarStore, getCurrentMonthIso } from "@/store/useCalendarStore";
+import type { InteractionMode, SavedRange } from "@/store/useCalendarStore";
 import styles from "./TrendyCalendar.module.css";
 
 type TransitionPhase = "idle" | "flippingOutNext" | "flippingOutPrev" | "flippingInNext" | "flippingInPrev";
@@ -26,9 +30,9 @@ const DECORATIVE_BOOKS = [
   { width: 12, height: 50, color: "#8a2020" },
   { width: 10, height: 42, color: "#1a4a8a" },
   { width: 14, height: 55, color: "#2a6a2a" },
-  { width: 8,  height: 38, color: "#8a6a20" },
+  { width: 8, height: 38, color: "#8a6a20" },
   { width: 11, height: 48, color: "#6a1a6a" },
-  { width: 9,  height: 44, color: "#4a4a4a" },
+  { width: 9, height: 44, color: "#4a4a4a" },
   { width: 13, height: 52, color: "#2a5a5a" },
 ];
 
@@ -47,9 +51,9 @@ const LIGHT_PARTICLES = Array.from({ length: 16 }, (_, i) => ({
 function getActiveAnimationClass(phase: TransitionPhase): string {
   switch (phase) {
     case "flippingOutNext": return styles.flipOutNext;
-    case "flippingInNext":  return styles.flipInNext;
+    case "flippingInNext": return styles.flipInNext;
     case "flippingOutPrev": return styles.flipOutPrev;
-    case "flippingInPrev":  return styles.flipInPrev;
+    case "flippingInPrev": return styles.flipInPrev;
     default: return "";
   }
 }
@@ -59,11 +63,11 @@ function getActiveAnimationClass(phase: TransitionPhase): string {
  */
 function calculateCalendarGridDates(baseDate: Date): Date[] {
   const monthStart = startOfMonth(baseDate);
-  const monthEnd   = endOfMonth(baseDate);
-  const gridStart  = startOfWeek(monthStart, { weekStartsOn: 0 });
-  const gridEnd    = endOfWeek(monthEnd,   { weekStartsOn: 0 });
+  const monthEnd = endOfMonth(baseDate);
+  const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
   const gridDates: Date[] = [];
-  
+
   let current = gridStart;
   while (current <= gridEnd) {
     gridDates.push(current);
@@ -71,6 +75,33 @@ function calculateCalendarGridDates(baseDate: Date): Date[] {
   }
 
   return gridDates;
+}
+
+/**
+ * Pre-computes a lookup set of dateKeys that fall inside ANY saved range,
+ * plus separate sets for start/end bounds — O(1) per cell during render.
+ */
+function buildSavedRangeLookup(savedRanges: SavedRange[]) {
+  const starts = new Set<string>();
+  const ends = new Set<string>();
+  const inner = new Set<string>();
+
+  for (const range of savedRanges) {
+    starts.add(range.start);
+    ends.add(range.end);
+    const days = eachDayOfInterval({
+      start: parseISO(range.start),
+      end: parseISO(range.end),
+    });
+    for (const d of days) {
+      const key = format(d, "yyyy-MM-dd");
+      if (key !== range.start && key !== range.end) {
+        inner.add(key);
+      }
+    }
+  }
+
+  return { starts, ends, inner };
 }
 
 export function TrendyCalendar() {
@@ -81,13 +112,26 @@ export function TrendyCalendar() {
     updateDisplayMonth,
     updateMonthlyAgendaLine,
     saveDailyChecklist,
+    rangeStart,
+    rangeEnd,
+    interactionMode,
+    savedRanges,
+    setRangeStart,
+    setRangeEnd,
+    clearTempRange,
+    setInteractionMode,
+    setFullDayNote,
+    addSavedRange,
   } = useCalendarStore();
 
   const [transitionPhase, setTransitionPhase] = useState<TransitionPhase>("idle");
   const [isAgendaPopupOpen, setIsAgendaPopupOpen] = useState(false);
   const [activeDateKey, setActiveDateKey] = useState<string | null>(null);
   const [draftHabitNotes, setDraftHabitNotes] = useState<string[]>(Array(5).fill(""));
-  
+
+  // Track whether the popup was opened from a range selection (for save/cancel logic)
+  const [popupFromRange, setPopupFromRange] = useState(false);
+
   // Physics & Interaction State
   const [pullRotation, setPullRotation] = useState(0);
   const [pullShiftX, setPullShiftX] = useState(0);
@@ -108,6 +152,9 @@ export function TrendyCalendar() {
   const activeMonthAgendas = (monthlyPlannerAgendas[activeMonthKey] || Array(6).fill("")) as string[];
   const calendarDates = calculateCalendarGridDates(activeDate);
   const today = new Date();
+
+  // Pre-compute saved range lookup for O(1) cell checks
+  const savedRangeLookup = useMemo(() => buildSavedRangeLookup(savedRanges), [savedRanges]);
 
   // Reset view to actual current time on mount.
   useEffect(() => {
@@ -143,13 +190,116 @@ export function TrendyCalendar() {
     }
   };
 
-  const openDailyAgendaPopup = (date: Date) => {
+  /**
+   * Opens the notes modal for a specific date.
+   * @param date      The date to open notes for
+   * @param fromRange Whether this was triggered from range selection (affects save/cancel behavior)
+   */
+  const openDailyAgendaPopup = (date: Date, fromRange = false) => {
     if (!isSameMonth(date, activeDate)) return;
 
     const dateKey = format(date, "yyyy-MM-dd");
     setActiveDateKey(dateKey);
     setDraftHabitNotes(dailyHabitNotes[dateKey] || Array(5).fill(""));
+    setPopupFromRange(fromRange);
     setIsAgendaPopupOpen(true);
+  };
+
+  /**
+   * Smart click handler: routes to either range-select or notes-open based on interactionMode.
+   */
+  const handleDayClick = (date: Date) => {
+    if (!isSameMonth(date, activeDate)) return;
+
+    if (interactionMode === "notes") {
+      openDailyAgendaPopup(date, false);
+      return;
+    }
+
+    // ── Range mode logic ──
+    const dateKey = format(date, "yyyy-MM-dd");
+
+    if (!rangeStart) {
+      // Click 1: Set range start
+      setRangeStart(dateKey);
+      return;
+    }
+
+    // Click 2: Set range end with smart swap, then auto-open modal
+    const startDate = parseISO(rangeStart);
+    let resolvedStart = rangeStart;
+    let resolvedEnd = dateKey;
+
+    if (isSameDay(date, startDate)) {
+      // Same day clicked twice — open as single-day note instead
+      clearTempRange();
+      openDailyAgendaPopup(date, false);
+      return;
+    }
+
+    if (isBefore(date, startDate)) {
+      // Clicked before start — swap chronologically
+      resolvedStart = dateKey;
+      resolvedEnd = rangeStart;
+      setRangeStart(resolvedStart);
+    }
+
+    setRangeEnd(resolvedEnd);
+
+    // Auto-open the modal immediately on the start date of the range
+    const popupDate = parseISO(resolvedStart);
+    const popupDateKey = resolvedStart;
+    setActiveDateKey(popupDateKey);
+    setDraftHabitNotes(dailyHabitNotes[popupDateKey] || Array(5).fill(""));
+    setPopupFromRange(true);
+    setIsAgendaPopupOpen(true);
+  };
+
+  /**
+   * Save handler with range-aware logic:
+   * - If from range + has content → clone notes to all days + persist range ribbon + clear temp
+   * - If from range + empty → treat as cancel (discard temp range)
+   * - If single day → save normally
+   */
+  const handleSaveNotes = () => {
+    if (!activeDateKey) return;
+
+    const hasContent = draftHabitNotes.some((n) => n.trim().length > 0);
+
+    if (popupFromRange && rangeStart && rangeEnd) {
+      if (hasContent) {
+        // Clone notes to every day in the range (inclusive)
+        const start = parseISO(rangeStart);
+        const end = parseISO(rangeEnd);
+        const allDays = eachDayOfInterval({ start, end });
+        allDays.forEach((day) => {
+          const key = format(day, "yyyy-MM-dd");
+          setFullDayNote(key, [...draftHabitNotes]);
+        });
+
+        // Persist the range ribbon permanently
+        addSavedRange(rangeStart, rangeEnd);
+      }
+      // Either way, clear the temporary range drawing
+      clearTempRange();
+    } else {
+      // Single-day save (notes mode)
+      saveDailyChecklist(activeDateKey, draftHabitNotes);
+    }
+
+    setIsAgendaPopupOpen(false);
+    setPopupFromRange(false);
+  };
+
+  /**
+   * Cancel/close handler: discard temp range if one was active.
+   */
+  const handlePopupClose = () => {
+    if (popupFromRange) {
+      clearTempRange();
+    }
+    setIsAgendaPopupOpen(false);
+    setPopupFromRange(false);
   };
 
   const handlePullInteraction = (pointerX: number) => {
@@ -160,7 +310,7 @@ export function TrendyCalendar() {
     const computedShift = Math.max(-12, Math.min(12, deltaX * 0.25));
 
     livePullStateRef.current = { angle: computedAngle, x: computedShift };
-    
+
     setPullRotation(computedAngle);
     setPullShiftX(computedShift);
     setIsPulling(true);
@@ -214,6 +364,11 @@ export function TrendyCalendar() {
     };
   }, []);
 
+  // Compute range count for display in popup header
+  const rangeCount = rangeStart && rangeEnd
+    ? eachDayOfInterval({ start: parseISO(rangeStart), end: parseISO(rangeEnd) }).length
+    : 0;
+
   return (
     <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-start overflow-x-hidden overflow-y-auto bg-[#1e0e06] px-4 pb-12 pt-6">
       <BackgroundEnvironment />
@@ -248,6 +403,7 @@ export function TrendyCalendar() {
             }}
             onTouchMove={(e) => handlePullInteraction(e.touches[0].clientX)}
             onTouchEnd={(e) => {
+              if (!isInteractionBoundRef.current) return;
               isInteractionBoundRef.current = false;
               resolvePullRelease();
               const distY = dragStartYRef.current - e.changedTouches[0].clientY;
@@ -266,27 +422,35 @@ export function TrendyCalendar() {
             tabIndex={0}
             aria-label="Interactive physical calendar"
           >
-            <CalendarHeroSection 
-              activeDate={activeDate} 
-              onPrev={() => triggerMonthFlip(-1)} 
-              onNext={() => triggerMonthFlip(1)} 
+            <CalendarHeroSection
+              activeDate={activeDate}
+              onPrev={() => triggerMonthFlip(-1)}
+              onNext={() => triggerMonthFlip(1)}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-[1fr_2.2fr]">
-              <MonthlyPlannerColumn 
-                notes={activeMonthAgendas} 
-                monthKey={activeMonthKey} 
-                onUpdate={updateMonthlyAgendaLine} 
+              <MonthlyPlannerColumn
+                notes={activeMonthAgendas}
+                monthKey={activeMonthKey}
+                onUpdate={updateMonthlyAgendaLine}
               />
-              
+
               <div className="px-3 py-2.5 md:py-3">
+                <ModeToggle
+                  mode={interactionMode}
+                  onModeChange={setInteractionMode}
+                />
                 <WeekdayHeader />
-                <CalendarDatesGrid 
-                  dates={calendarDates} 
-                  activeMonth={activeDate} 
-                  dailyNotes={dailyHabitNotes} 
+                <CalendarDatesGrid
+                  dates={calendarDates}
+                  activeMonth={activeDate}
+                  dailyNotes={dailyHabitNotes}
                   today={today}
-                  onDateClick={openDailyAgendaPopup} 
+                  tempRangeStart={rangeStart}
+                  tempRangeEnd={rangeEnd}
+                  savedRangeLookup={savedRangeLookup}
+                  interactionMode={interactionMode}
+                  onDateClick={handleDayClick}
                 />
               </div>
             </div>
@@ -294,18 +458,17 @@ export function TrendyCalendar() {
         </div>
       </div>
 
-      <AgendaPopup 
-        isOpen={isAgendaPopupOpen} 
-        onClose={() => setIsAgendaPopupOpen(false)} 
+      <AgendaPopup
+        isOpen={isAgendaPopupOpen}
+        onClose={handlePopupClose}
         dateKey={activeDateKey}
         habitNotes={draftHabitNotes}
         onHabitChange={setDraftHabitNotes}
-        onSave={() => {
-          if (activeDateKey) {
-            saveDailyChecklist(activeDateKey, draftHabitNotes);
-            setIsAgendaPopupOpen(false);
-          }
-        }}
+        rangeCount={rangeCount}
+        rangeStart={rangeStart}
+        rangeEnd={rangeEnd}
+        isRangePopup={popupFromRange}
+        onSave={handleSaveNotes}
       />
     </div>
   );
@@ -360,9 +523,9 @@ function FloorLevel() {
 
 function WindowFeature() {
   const stars = [
-    { top:"14%", left:"18%", s:2, d:0 }, { top:"24%", left:"68%", s:1, d:0.6 },
-    { top:"58%", left:"28%", s:2, d:1.1 }, { top:"38%", left:"78%", s:1, d:1.6 },
-    { top:"72%", left:"52%", s:2, d:0.9 }, { top:"10%", left:"52%", s:1, d:2.1 },
+    { top: "14%", left: "18%", s: 2, d: 0 }, { top: "24%", left: "68%", s: 1, d: 0.6 },
+    { top: "58%", left: "28%", s: 2, d: 1.1 }, { top: "38%", left: "78%", s: 1, d: 1.6 },
+    { top: "72%", left: "52%", s: 2, d: 0.9 }, { top: "10%", left: "52%", s: 1, d: 2.1 },
   ];
 
   return (
@@ -486,6 +649,69 @@ function NavButton({ direction, onClick }: { direction: "prev" | "next"; onClick
   );
 }
 
+/* ─── MODE TOGGLE (Pill Switch) ─── */
+
+interface ModeToggleProps {
+  mode: InteractionMode;
+  onModeChange: (mode: InteractionMode) => void;
+}
+
+function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
+  return (
+    <div className="mb-2 flex items-center justify-center">
+      <div
+        className="relative flex h-[30px] w-[210px] rounded-full border border-[rgba(150,110,50,0.35)] bg-[rgba(60,42,16,0.08)] p-[2px] shadow-[inset_0_1px_3px_rgba(0,0,0,0.08)]"
+        role="radiogroup"
+        aria-label="Interaction mode"
+      >
+        {/* Sliding pill background */}
+        <div
+          className="absolute top-[2px] left-[2px] h-[calc(100%-4px)] w-[calc(50%-2px)] rounded-full transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] pointer-events-none"
+          style={{
+            transform: mode === "range" ? "translateX(calc(100% + 0px))" : "translateX(0)",
+            background: "linear-gradient(135deg, #df8c2c, #c47820)",
+            boxShadow: "0 2px 8px rgba(223,140,44,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
+          }}
+        />
+        <button
+          className={`relative z-10 flex flex-1 items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200 ${mode === "notes"
+            ? "text-white"
+            : "text-[#8a6a3a] hover:text-[#6a4a2a]"
+            }`}
+          onClick={(e) => { e.stopPropagation(); onModeChange("notes"); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+          aria-checked={mode === "notes"}
+          role="radio"
+          aria-label="Daily Notes mode"
+          id="mode-toggle-notes"
+        >
+          Daily Notes
+        </button>
+        <button
+          className={`relative z-10 flex flex-1 items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200 ${mode === "range"
+            ? "text-white"
+            : "text-[#8a6a3a] hover:text-[#6a4a2a]"
+            }`}
+          onClick={(e) => { e.stopPropagation(); onModeChange("range"); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+          aria-checked={mode === "range"}
+          role="radio"
+          aria-label="Plan Range mode"
+          id="mode-toggle-range"
+        >
+          Plan Range
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface PlannerColumnProps {
   notes: string[];
   monthKey: string;
@@ -526,17 +752,38 @@ function WeekdayHeader() {
   );
 }
 
+/* ─── CALENDAR DATES GRID (with temp + saved range rendering) ─── */
+
+interface SavedRangeLookup {
+  starts: Set<string>;
+  ends: Set<string>;
+  inner: Set<string>;
+}
+
 interface GridGridProps {
   dates: Date[];
   activeMonth: Date;
   dailyNotes: Record<string, string[]>;
   today: Date;
+  tempRangeStart: string | null;
+  tempRangeEnd: string | null;
+  savedRangeLookup: SavedRangeLookup;
+  interactionMode: InteractionMode;
   onDateClick: (d: Date) => void;
 }
 
-function CalendarDatesGrid({ dates, activeMonth, dailyNotes, today, onDateClick }: GridGridProps) {
+function CalendarDatesGrid({
+  dates, activeMonth, dailyNotes, today,
+  tempRangeStart, tempRangeEnd,
+  savedRangeLookup,
+  interactionMode,
+  onDateClick,
+}: GridGridProps) {
+  const tempStartDate = tempRangeStart ? parseISO(tempRangeStart) : null;
+  const tempEndDate = tempRangeEnd ? parseISO(tempRangeEnd) : null;
+
   return (
-    <div className="grid grid-cols-7 gap-1">
+    <div className="grid grid-cols-7 gap-y-1">
       {dates.map((date, idx) => {
         const dateKey = format(date, "yyyy-MM-dd");
         const isInMonth = isSameMonth(date, activeMonth);
@@ -544,22 +791,80 @@ function CalendarDatesGrid({ dates, activeMonth, dailyNotes, today, onDateClick 
         const hasChecklist = (dailyNotes[dateKey] || []).some(n => n.trim().length > 0);
         const isSunday = idx % 7 === 0;
 
+        // ── Temp range checks ──
+        const isTempStart = tempStartDate ? isSameDay(date, tempStartDate) : false;
+        const isTempEnd = tempEndDate ? isSameDay(date, tempEndDate) : false;
+        const isTempInner =
+          tempStartDate && tempEndDate
+            ? isAfter(date, tempStartDate) && isBefore(date, tempEndDate)
+            : false;
+
+        // ── Saved range checks (O(1) from pre-computed lookup) ──
+        const isSavedStart = savedRangeLookup.starts.has(dateKey);
+        const isSavedEnd = savedRangeLookup.ends.has(dateKey);
+        const isSavedInner = savedRangeLookup.inner.has(dateKey);
+
+        // ── Merged flags: temp OR saved ──
+        const isRangeStart = isTempStart || isSavedStart;
+        const isRangeEnd = isTempEnd || isSavedEnd;
+        const isInRange = isTempInner || isSavedInner;
+        const isRangeEndpoint = isRangeStart || isRangeEnd;
+        const isRangeRelated = isRangeStart || isRangeEnd || isInRange;
+
+        // Position in the week row (0–6)
+        const colIdx = idx % 7;
+        const isRowStart = colIdx === 0;
+        const isRowEnd = colIdx === 6;
+
         return (
-          <div key={dateKey} className={`flex aspect-square items-center justify-center ${isSunday ? styles.sunCol : ""}`}>
+          <div
+            key={dateKey}
+            className={`relative flex items-center justify-center aspect-square ${isSunday ? styles.sunCol : ""}`}
+          >
+            {/* Range background band — fills entire cell for connected visual */}
+            {isInMonth && isRangeRelated && (
+              <div
+                className="absolute inset-y-[4px] pointer-events-none"
+                style={{
+                  left: isRangeStart && !isRowStart ? "50%" : isInRange || isRangeEnd ? "0" : "50%",
+                  right: isRangeEnd && !isRowEnd ? "50%" : isInRange || isRangeStart ? "0" : "50%",
+                  background: "rgba(223, 140, 44, 0.12)",
+                  borderRadius:
+                    isRangeStart && isRangeEnd
+                      ? "8px"
+                      : isRangeStart || isRowStart
+                        ? "8px 0 0 8px"
+                        : isRangeEnd || isRowEnd
+                          ? "0 8px 8px 0"
+                          : "0",
+                }}
+              />
+            )}
+
             <button
               className={`
-                flex min-h-[clamp(36px,9vw,44px)] min-w-[clamp(36px,9vw,44px)] aspect-square w-[min(90%,48px)] 
+                relative z-10 flex min-h-[clamp(36px,9vw,44px)] min-w-[clamp(36px,9vw,44px)] aspect-square w-[min(90%,48px)] 
                 items-center justify-center rounded-[5px] border-none bg-transparent font-sans text-[clamp(12px,3vw,16px)] 
                 font-semibold text-[#3a2a10] transition-all duration-120 hover:bg-[rgba(223,140,44,0.18)]
                 ${!isInMonth ? styles.other : ""} 
-                ${isCurrentDay ? styles.today : ""} 
-                ${hasChecklist ? styles.hasNote : ""}
+                ${isCurrentDay && !isRangeEndpoint ? styles.today : ""} 
+                ${hasChecklist && !isRangeEndpoint ? styles.hasNote : ""}
+                ${isRangeEndpoint ? styles.rangeEndpoint : ""}
+                ${isInRange && !isCurrentDay && !hasChecklist ? styles.rangeInner : ""}
               `}
               onClick={(e) => { e.stopPropagation(); onDateClick(date); }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
               disabled={!isInMonth}
-              aria-label={format(date, "PPPP")}
+              aria-label={`${format(date, "PPPP")}${isRangeStart ? " (range start)" : ""}${isRangeEnd ? " (range end)" : ""}${isInRange ? " (in range)" : ""}`}
             >
               {format(date, "d")}
+              {/* Pulsing dot on temp start while waiting for end date click */}
+              {isTempStart && !tempRangeEnd && interactionMode === "range" && (
+                <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-[3px] w-[3px] rounded-full bg-[#df8c2c] animate-pulse" />
+              )}
             </button>
           </div>
         );
@@ -568,17 +873,25 @@ function CalendarDatesGrid({ dates, activeMonth, dailyNotes, today, onDateClick 
   );
 }
 
+/* ─── AGENDA POPUP ─── */
+
 interface PopupProps {
   isOpen: boolean;
   onClose: () => void;
   dateKey: string | null;
   habitNotes: string[];
   onHabitChange: (notes: string[]) => void;
+  rangeCount: number;
+  rangeStart: string | null;
+  rangeEnd: string | null;
+  isRangePopup: boolean;
   onSave: () => void;
 }
 
-function AgendaPopup({ isOpen, onClose, dateKey, habitNotes, onHabitChange, onSave }: PopupProps) {
+function AgendaPopup({ isOpen, onClose, dateKey, habitNotes, onHabitChange, rangeCount, rangeStart, rangeEnd, isRangePopup, onSave }: PopupProps) {
   if (!isOpen) return null;
+
+  const hasRange = isRangePopup && rangeStart && rangeEnd && rangeCount > 0;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[rgba(15,7,3,0.75)] p-4 backdrop-blur-md" onClick={onClose}>
@@ -587,10 +900,27 @@ function AgendaPopup({ isOpen, onClose, dateKey, habitNotes, onHabitChange, onSa
         onClick={(e) => e.stopPropagation()}
       >
         <button className="absolute right-4 top-4 border-none bg-transparent text-2xl text-[#8a6a3a]" onClick={onClose}>×</button>
-        <div className="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#a07840]">Daily agenda</div>
-        <div className="mb-5 font-['Caveat_Brush'] text-2xl text-[#3a2a10]">
-          {dateKey ? format(parseISO(dateKey), "MMMM d, yyyy") : ""}
+        <div className="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#a07840]">
+          {hasRange ? "Range Event" : "Daily agenda"}
         </div>
+        <div className="mb-5 font-['Caveat_Brush'] text-2xl text-[#3a2a10]">
+          {hasRange
+            ? `${format(parseISO(rangeStart!), "MMM d")} — ${format(parseISO(rangeEnd!), "MMM d")}`
+            : dateKey
+              ? format(parseISO(dateKey), "MMMM d, yyyy")
+              : ""}
+        </div>
+
+        {/* Range clone indicator */}
+        {hasRange && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg bg-[rgba(223,140,44,0.1)] border border-[rgba(223,140,44,0.25)] px-3 py-2">
+            <CalendarRange size={14} className="text-[#df8c2c] shrink-0" />
+            <span className="text-[11px] text-[#7a4a08] leading-tight">
+              Notes will be cloned to <strong>{rangeCount} days</strong>. Leave empty to cancel.
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-col space-y-1">
           {habitNotes.map((text, idx) => (
             <input
@@ -608,7 +938,9 @@ function AgendaPopup({ isOpen, onClose, dateKey, habitNotes, onHabitChange, onSa
         </div>
         <div className="mt-6 flex justify-end gap-3">
           <button className="px-5 py-2 font-['Caveat_Brush'] text-base text-[#8a6a3a]" onClick={onClose}>Cancel</button>
-          <button className="px-6 py-2 bg-[#df8c2c] rounded-full text-white font-['Caveat_Brush'] shadow-lg" onClick={onSave}>Save Changes</button>
+          <button className="px-6 py-2 bg-[#df8c2c] rounded-full text-white font-['Caveat_Brush'] shadow-lg" onClick={onSave}>
+            {hasRange ? `Save to ${rangeCount} Days` : "Save Changes"}
+          </button>
         </div>
       </div>
     </div>

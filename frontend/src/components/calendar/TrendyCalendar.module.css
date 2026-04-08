@@ -371,9 +371,26 @@
 .today   { background: rgba(223, 140, 44, 0.22); color: #7a4a08; font-weight: 700; }
 .hasNote { background: #df8c2c; color: #fff; font-weight: 700; border-radius: 6px; box-shadow: 0 1px 6px rgba(223,140,44,0.4); }
 
+/* Range endpoint days (start & end) — filled amber pill */
+.rangeEndpoint {
+  background: linear-gradient(135deg, #df8c2c, #c47820) !important;
+  color: #fff !important;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px rgba(223, 140, 44, 0.3), 0 2px 8px rgba(223, 140, 44, 0.35);
+  transform: scale(1.05);
+}
+
+/* Days strictly between start & end — subtle warm wash */
+.rangeInner {
+  color: #5a3a10;
+  font-weight: 600;
+}
+
 .sunCol button        { color: #b83020; }
 .sunCol button.hasNote,
 .sunCol button.today  { color: #fff; }
+.sunCol button.rangeEndpoint { color: #fff; }
 
 /* ─── ANIMATIONS ─── */
 
