@@ -104,11 +104,14 @@ export function CalendarIntro({ onComplete, onReveal }: { onComplete: () => void
     <div className="w-full h-full bg-transparent overflow-hidden relative select-none pointer-events-none">
       <Canvas shadows>
         <PerspectiveCamera makeDefault position={[0, 0, 7]} fov={50} />
-        <ambientLight intensity={1} />
-        <directionalLight position={[-5, 5, 5]} intensity={2} castShadow />
-        <directionalLight position={[5, 10, -5]} intensity={0.5} />
-
-        <Environment preset="city" />
+        
+        {/* Replacement Studio Lighting */}
+        <ambientLight intensity={1.5} />
+        <hemisphereLight intensity={0.5} color="#e6d5b8" groundColor="#000000" />
+        
+        <directionalLight position={[-5, 5, 5]} intensity={2.5} castShadow />
+        <directionalLight position={[5, 10, -5]} intensity={1} />
+        <pointLight position={[0, 5, 10]} intensity={1} color="#ffffff" />
 
         <Robot onAnimationComplete={onComplete} onReveal={onReveal} />
 
