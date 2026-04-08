@@ -458,7 +458,7 @@ export function TrendyCalendar() {
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-px">
+                <div className="grid grid-cols-7 gap-1">
                   {visibleDates.map((date, idx) => {
                     const dateKey = format(date, "yyyy-MM-dd");
                     const inMonth = isSameMonth(date, currentMonth);
@@ -468,7 +468,7 @@ export function TrendyCalendar() {
                     return (
                       <div key={dateKey} className={`flex aspect-square items-center justify-center ${col === 0 ? styles.sunCol : ""}`}>
                         <button
-                          className={`flex min-h-11 min-w-11 aspect-square w-[min(90%,48px)] items-center justify-center rounded-[5px] border-none bg-transparent font-sans text-[clamp(12px,3vw,16px)] font-semibold text-[#3a2a10] transition-all duration-[120ms] hover:bg-[rgba(223,140,44,0.18)] disabled:cursor-default ${!inMonth ? styles.other : ""} ${isToday ? styles.today : ""} ${hasNote ? styles.hasNote : ""}`}
+                          className={`flex min-h-[clamp(36px,9vw,44px)] min-w-[clamp(36px,9vw,44px)] aspect-square w-[min(90%,48px)] items-center justify-center rounded-[5px] border-none bg-transparent font-sans text-[clamp(12px,3vw,16px)] font-semibold text-[#3a2a10] transition-all duration-[120ms] hover:bg-[rgba(223,140,44,0.18)] disabled:cursor-default ${!inMonth ? styles.other : ""} ${isToday ? styles.today : ""} ${hasNote ? styles.hasNote : ""}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             openDayNotesModal(date);
