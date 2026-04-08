@@ -1,95 +1,101 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-interface CalendarState {
-  currentMonth: string; // ISO String
-  rangeStart: string | null;
-  rangeEnd: string | null;
-  monthNotes: Record<string, string[]>; // yyyy-MM -> 5 lines
-  dayNotes: Record<string, string[]>; // yyyy-MM-dd -> 5 lines
-  setCurrentMonth: (date: Date) => void;
-  setRangeStart: (date: Date | null) => void;
-  setRangeEnd: (date: Date | null) => void;
-  setMonthNote: (monthKey: string, index: number, content: string) => void;
-  setDayNote: (dateKey: string, lineIndex: number, content: string) => void;
-  setFullDayNote: (dateKey: string, notes: string[]) => void;
+/**
+ * Global state management for the physical 3D calendar.
+ * Handles month navigation and persistent notes for both monthly and daily views.
+ */
+export interface CalendarState {
+  activeDisplayMonthIso: string;
+  monthlyPlannerAgendas: Record<string, string[]>;
+  dailyHabitNotes: Record<string, string[]>;
+
+  updateDisplayMonth: (date: Date) => void;
+  updateMonthlyAgendaLine: (monthKey: string, index: number, content: string) => void;
+  saveDailyChecklist: (dateKey: string, notes: string[]) => void;
 }
 
-type PersistedCalendarState = Partial<Pick<CalendarState, "currentMonth" | "rangeStart" | "rangeEnd" | "monthNotes" | "dayNotes">>;
+type PersistedCalendarState = Partial<
+  Pick<CalendarState, "activeDisplayMonthIso" | "monthlyPlannerAgendas" | "dailyHabitNotes">
+>;
 
-const LEGACY_DEFAULT_MONTH = new Date(2021, 0, 1).toISOString();
+const LEGACY_DEFAULT_MONTH_ISO = new Date(2021, 0, 1).toISOString();
 
+/**
+ * Returns a standardized ISO string for the 15th of the current month at noon.
+ * This prevents timezone offsets from shifting the month during cross-boundary loads.
+ */
 export function getCurrentMonthIso(): string {
   const now = new Date();
-  // Use mid-month noon to avoid timezone edge cases crossing month boundaries.
-  return new Date(now.getFullYear(), now.getMonth(), 15, 12, 0, 0, 0).toISOString();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  return new Date(year, month, 15, 12, 0, 0, 0).toISOString();
 }
 
 export const useCalendarStore = create<CalendarState>()(
   persist(
     (set) => ({
-      currentMonth: getCurrentMonthIso(),
-      rangeStart: null,
-      rangeEnd: null,
-      monthNotes: {},
-      dayNotes: {},
-      setCurrentMonth: (date: Date) => set({ currentMonth: date.toISOString() }),
-      setRangeStart: (date: Date | null) => set({ rangeStart: date ? date.toISOString() : null }),
-      setRangeEnd: (date: Date | null) => set({ rangeEnd: date ? date.toISOString() : null }),
-      setMonthNote: (monthKey: string, index: number, content: string) =>
+      activeDisplayMonthIso: getCurrentMonthIso(),
+      monthlyPlannerAgendas: {},
+      dailyHabitNotes: {},
+
+      updateDisplayMonth: (date: Date) => {
+        const standardMonthIso = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          15,
+          12,
+          0,
+          0,
+          0
+        ).toISOString();
+        set({ activeDisplayMonthIso: standardMonthIso });
+      },
+
+      updateMonthlyAgendaLine: (monthKey, index, content) => {
         set((state) => {
-          const notes = state.monthNotes[monthKey] || ["", "", "", ""];
-          const newNotes = [...notes];
-          newNotes[index] = content;
+          const currentAgendas = [...(state.monthlyPlannerAgendas[monthKey] || Array(6).fill(""))];
+          currentAgendas[index] = content;
           return {
-            monthNotes: {
-              ...state.monthNotes,
-              [monthKey]: newNotes,
+            monthlyPlannerAgendas: {
+              ...state.monthlyPlannerAgendas,
+              [monthKey]: currentAgendas,
             },
           };
-        }),
-      setDayNote: (dateKey: string, lineIndex: number, content: string) =>
-        set((state) => {
-          const notes = state.dayNotes[dateKey] || ["", "", "", "", ""];
-          const newNotes = [...notes];
-          newNotes[lineIndex] = content;
-          return {
-            dayNotes: {
-              ...state.dayNotes,
-              [dateKey]: newNotes,
-            },
-          };
-        }),
-      setFullDayNote: (dateKey: string, notes: string[]) =>
+        });
+      },
+
+      saveDailyChecklist: (dateKey, notes) => {
         set((state) => ({
-          dayNotes: {
-            ...state.dayNotes,
+          dailyHabitNotes: {
+            ...state.dailyHabitNotes,
             [dateKey]: notes,
           },
-        })),
+        }));
+      },
     }),
     {
-      name: "calendar-store",
+      name: "cal-physical-ux-data",
       storage: createJSONStorage(() => localStorage),
-      version: 2,
-      partialize: (state) => {
-        const { currentMonth, ...rest } = state;
-        return rest;
-      },
-      migrate: (persistedState, _version) => {
-        const state = (persistedState as PersistedCalendarState) || {};
-        const currentMonth =
-          !state.currentMonth || state.currentMonth === LEGACY_DEFAULT_MONTH
-            ? getCurrentMonthIso()
-            : state.currentMonth;
+      version: 4,
 
-        return {
-          currentMonth,
-          rangeStart: state.rangeStart ?? null,
-          rangeEnd: state.rangeEnd ?? null,
-          monthNotes: state.monthNotes ?? {},
-          dayNotes: state.dayNotes ?? {},
-        };
+      // Month navigation is transient (always starts on today), while notes are persistent.
+      partialize: (state) => {
+        const { activeDisplayMonthIso, ...persistentNotes } = state;
+        return persistentNotes;
+      },
+
+      migrate: (persistedState, version) => {
+        const legacyState = (persistedState as any) || {};
+
+        if (version < 4) {
+          return {
+            activeDisplayMonthIso: getCurrentMonthIso(),
+            monthlyPlannerAgendas: legacyState.monthlyPlannerAgendas || legacyState.monthNotes || {},
+            dailyHabitNotes: legacyState.dailyHabitNotes || legacyState.dayNotes || {},
+          };
+        }
+        return legacyState;
       },
     }
   )
