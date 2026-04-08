@@ -303,14 +303,20 @@
 }
 
 .wireRow {
-  width: min(700px, 94vw);
+  width: min(680px, 90vw);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 0 24px;
+  padding: 0 12vw;
   height: 30px;
   position: relative;
   z-index: 2;
+}
+
+@media (min-width: 768px) {
+  .wireRow {
+    padding: 0 24px;
+  }
 }
 
 .wireRow::before,
@@ -376,7 +382,7 @@
 .calStack {
   position: relative;
   z-index: 10;
-  width: min(700px, 94vw);
+  width: min(680px, 90vw);
   transform-origin: 50% 0%;
   animation: windSway 6.8s ease-in-out infinite;
   will-change: transform;
@@ -565,14 +571,14 @@
 
 .heroPortrait {
   position: absolute;
-  right: -5px; bottom: 0;
-  height: 110%;
+  right: -2px; bottom: 0;
+  height: 108%;
   width: auto;
   max-width: 48%; 
   z-index: 4;
   object-fit: contain;
   object-position: bottom right;
-  filter: drop-shadow(-8px 2px 16px rgba(0,0,0,0.4));
+  filter: drop-shadow(-8px 2px 14px rgba(0,0,0,0.35));
   pointer-events: none;
 }
 

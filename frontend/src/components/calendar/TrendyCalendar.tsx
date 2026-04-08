@@ -220,7 +220,7 @@ export function TrendyCalendar() {
   const selectedDate = selectedDateIsoKey ? parseISO(`${selectedDateIsoKey}T00:00:00`) : null;
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col items-center justify-start overflow-x-hidden overflow-y-auto bg-[#1e0e06] px-3 pb-8 pt-4">
+    <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-start overflow-x-hidden overflow-y-auto bg-[#1e0e06] px-4 pb-12 pt-6">
       <svg className={styles.brickBg} xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-hidden="true">
         <defs>
           <filter id="rough">
@@ -490,7 +490,7 @@ export function TrendyCalendar() {
       {isDayNotesModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[rgba(15,7,3,0.75)] p-4 backdrop-blur-[5px]" onClick={closeDayNotesModal}>
           <div
-            className="relative w-full max-w-[360px] rounded-[14px] border-2 border-[rgba(150,110,50,0.45)] bg-[#fdf6e3] p-[22px] shadow-[0_24px_70px_rgba(0,0,0,0.55)]"
+            className="relative w-full max-w-[min(360px,calc(100vw-32px))] rounded-[14px] border-2 border-[rgba(150,110,50,0.45)] bg-[#fdf6e3] p-[22px] shadow-[0_24px_70px_rgba(0,0,0,0.55)]"
             onClick={(e) => e.stopPropagation()}
           >
             <button className="absolute right-3.5 top-3 border-none bg-transparent text-[20px] leading-none text-[#8a6a3a]" onClick={closeDayNotesModal} aria-label="Close notes">×</button>
