@@ -15,6 +15,8 @@ interface CalendarState {
   setFullDayNote: (dateKey: string, notes: string[]) => void;
 }
 
+type PersistedCalendarState = Partial<Pick<CalendarState, "currentMonth" | "rangeStart" | "rangeEnd" | "monthNotes" | "dayNotes">>;
+
 export const useCalendarStore = create<CalendarState>()(
   persist(
     (set) => ({
@@ -61,6 +63,18 @@ export const useCalendarStore = create<CalendarState>()(
     {
       name: "calendar-store",
       storage: createJSONStorage(() => localStorage),
+      version: 1,
+      migrate: (persistedState, _version) => {
+        const state = (persistedState as PersistedCalendarState) || {};
+
+        return {
+          currentMonth: state.currentMonth ?? new Date(2021, 0, 1).toISOString(),
+          rangeStart: state.rangeStart ?? null,
+          rangeEnd: state.rangeEnd ?? null,
+          monthNotes: state.monthNotes ?? {},
+          dayNotes: state.dayNotes ?? {},
+        };
+      },
     }
   )
 );

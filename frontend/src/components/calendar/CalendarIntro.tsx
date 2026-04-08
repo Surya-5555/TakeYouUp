@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, useAnimations, Environment, PerspectiveCamera, ContactShadows } from "@react-three/drei";
+import { useGLTF, useAnimations, PerspectiveCamera, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 
 function Robot({ onAnimationComplete, onReveal }: { onAnimationComplete: () => void, onReveal: () => void }) {
@@ -17,8 +17,8 @@ function Robot({ onAnimationComplete, onReveal }: { onAnimationComplete: () => v
   useEffect(() => {
     if (!actions) return;
 
-    let transitionTimer: any;
-    let finishTimer: any;
+    let transitionTimer: ReturnType<typeof setTimeout>;
+    let finishTimer: ReturnType<typeof setTimeout>;
 
     if (phase === "entering") {
       // 1. Walk in
@@ -74,7 +74,6 @@ function Robot({ onAnimationComplete, onReveal }: { onAnimationComplete: () => v
   useFrame((state, delta) => {
     if (!group.current) return;
 
-    // Use delta for frame-rate independent movement (modern practice)
     if (phase === "entering") {
       group.current.position.x += 2 * delta;
       group.current.rotation.y = Math.PI / 2 + 0.3;
@@ -105,11 +104,11 @@ export function CalendarIntro({ onComplete, onReveal }: { onComplete: () => void
     <div className="w-full h-full bg-transparent overflow-hidden relative select-none pointer-events-none">
       <Canvas shadows={{ type: THREE.PCFShadowMap }}>
         <PerspectiveCamera makeDefault position={[0, 0, 7]} fov={50} />
-        
+
         {/* Replacement Studio Lighting */}
         <ambientLight intensity={1.5} />
         <hemisphereLight intensity={0.5} color="#e6d5b8" groundColor="#000000" />
-        
+
         <directionalLight position={[-5, 5, 5]} intensity={2.5} castShadow />
         <directionalLight position={[5, 10, -5]} intensity={1} />
         <pointLight position={[0, 5, 10]} intensity={1} color="#ffffff" />

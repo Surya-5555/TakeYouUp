@@ -1,3 +1,6 @@
+/* TrendyCalendar.module.css */
+
+/* ─── SCENE ─── */
 .scene {
   min-height: 100dvh;
   position: relative;
@@ -7,8 +10,10 @@
   justify-content: flex-start;
   padding: 16px 12px 60px;
   overflow-x: hidden;
+  background: #1e0e06;
 }
 
+/* ─── BRICK BG ─── */
 .brickBg {
   position: fixed;
   inset: 0;
@@ -16,14 +21,273 @@
   pointer-events: none;
 }
 
-.wallVignette {
+/* ─── ROOM DECOR (all z-index 1-4, pointer-events:none) ─── */
+.roomFloor {
   position: fixed;
-  inset: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30%;
   z-index: 1;
-  background: radial-gradient(ellipse at center, transparent 30%, rgba(5, 2, 0, 0.72) 100%);
+  pointer-events: none;
+  background: linear-gradient(180deg, #2a1508 0%, #1a0c04 100%);
+}
+
+.roomFloor::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    88deg,
+    transparent,
+    transparent 70px,
+    rgba(0, 0, 0, 0.18) 70px,
+    rgba(0, 0, 0, 0.18) 71px
+  );
+}
+
+.baseboard {
+  position: fixed;
+  bottom: 30%;
+  left: 0;
+  right: 0;
+  height: 14px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(180deg, #4a2510, #2a1208);
+  border-top: 1px solid rgba(255, 200, 80, 0.15);
+}
+
+.wallpaper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 30%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,200,100,0.6) 28px, rgba(255,200,100,0.6) 29px),
+    repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(255,200,100,0.6) 28px, rgba(255,200,100,0.6) 29px);
+}
+
+.roomWindow {
+  position: fixed;
+  top: 7%;
+  left: 3.5%;
+  width: clamp(110px, 13vw, 175px);
+  height: clamp(140px, 18vw, 215px);
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 30%, #1e4a70 60%, #0d2a45 100%);
+  border: 6px solid #5a3010;
+  border-radius: 2px;
+  box-shadow: inset 0 0 28px rgba(0,0,0,0.55), 4px 4px 20px rgba(0,0,0,0.7);
+  overflow: hidden;
+}
+
+.roomWindow::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 5px;
+  background: #5a3010;
+  transform: translateY(-50%);
+}
+
+.roomWindow::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 5px;
+  background: #5a3010;
+  transform: translateX(-50%);
+}
+
+.windowMoon {
+  position: fixed;
+  top: calc(7% + 10px);
+  left: calc(3.5% + clamp(110px, 13vw, 175px) * 0.55);
+  width: 20px;
+  height: 20px;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffde8, #e8d080);
+  box-shadow: 0 0 14px rgba(255, 240, 150, 0.75);
+  animation: moonPulse 4.5s ease-in-out infinite alternate;
+}
+
+@keyframes moonPulse {
+  0%   { box-shadow: 0 0 12px rgba(255, 240, 150, 0.7); }
+  100% { box-shadow: 0 0 24px rgba(255, 240, 150, 1); }
+}
+
+.curtainRod {
+  position: fixed;
+  top: calc(7% - 7px);
+  left: calc(3.5% - clamp(46px, 5.5vw, 68px) + 4px);
+  width: calc(clamp(110px, 13vw, 175px) + clamp(92px, 11vw, 136px));
+  height: 8px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(180deg, #d4a030, #8a6010, #d4a030);
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.curtainLeft,
+.curtainRight {
+  position: fixed;
+  top: 5%;
+  width: clamp(46px, 5.5vw, 68px);
+  height: clamp(160px, 22vw, 248px);
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(180deg, #7a2424 0%, #9a2e2e 40%, #6a1c1c 100%);
+  border-radius: 0 0 10px 10px;
+}
+
+.curtainLeft {
+  left: calc(3.5% - clamp(46px, 5.5vw, 68px) + 5px);
+  transform: rotate(-3deg);
+  transform-origin: top center;
+}
+
+.curtainRight {
+  left: calc(3.5% + clamp(110px, 13vw, 175px) - 4px);
+  transform: rotate(3deg);
+  transform-origin: top center;
+}
+
+.curtainLeft::after,
+.curtainRight::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 13px;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 50%;
+}
+
+.curtainLeft::after  { right: 9px; }
+.curtainRight::after { left: 9px; }
+
+.bookShelf {
+  position: fixed;
+  right: 3%;
+  top: 20%;
+  width: clamp(85px, 9.5vw, 135px);
+  z-index: 2;
   pointer-events: none;
 }
 
+.shelfBoard {
+  width: 100%;
+  height: 12px;
+  background: linear-gradient(180deg, #7a4520, #4a2510);
+  border-radius: 3px 3px 0 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+  position: relative;
+}
+
+.shelfBoard::before,
+.shelfBoard::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  width: 10px;
+  height: 20px;
+  background: #4a2510;
+}
+
+.shelfBoard::before { left: 10px; }
+.shelfBoard::after  { right: 10px; }
+
+.candle {
+  position: fixed;
+  right: calc(3% + clamp(85px, 9.5vw, 135px) * 0.6);
+  top: calc(20% - 38px);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.candleBody {
+  width: 10px;
+  height: 26px;
+  background: linear-gradient(180deg, #f8f0e0, #e8d8b8);
+  border-radius: 2px 2px 0 0;
+  margin: 0 auto;
+}
+
+.candleFlame {
+  width: 8px;
+  height: 14px;
+  background: radial-gradient(ellipse at 50% 80%, #fff7a0, #ffb030 50%, transparent 100%);
+  border-radius: 50% 50% 30% 30%;
+  margin: 0 auto;
+  animation: flicker 1.7s ease-in-out infinite alternate;
+}
+
+@keyframes flicker {
+  0%   { transform: scaleX(1) scaleY(1) rotate(-2deg); opacity: 0.9; }
+  30%  { transform: scaleX(0.88) scaleY(1.1) rotate(3deg); opacity: 1; }
+  60%  { transform: scaleX(1.06) scaleY(0.92) rotate(-1deg); opacity: 0.85; }
+  100% { transform: scaleX(0.93) scaleY(1.06) rotate(2deg); opacity: 0.95; }
+}
+
+.candleGlow {
+  position: fixed;
+  z-index: 2;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgba(255, 170, 40, 0.12) 0%, transparent 70%);
+  filter: blur(22px);
+  animation: glowPulse 1.7s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+  0%   { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.plantPot {
+  position: fixed;
+  right: 3%;
+  bottom: calc(30% + 2px);
+  width: 52px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.potRim {
+  width: 48px;
+  height: 8px;
+  background: #a05030;
+  border-radius: 3px;
+  margin: 0 auto;
+}
+
+.potBody {
+  width: 40px;
+  height: 28px;
+  background: linear-gradient(180deg, #8a4020, #5a2810);
+  border-radius: 0 0 6px 6px;
+  margin: 0 auto;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── VIGNETTE (z-index 5, no pointer events) ─── */
+.wallVignette {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 35%, transparent 20%, rgba(5, 2, 0, 0.68) 100%);
+}
+
+/* ─── HANGER (z-index 10) ─── */
 .hanger {
   position: relative;
   z-index: 10;
@@ -128,6 +392,7 @@
   opacity: 0.95;
 }
 
+/* ─── CALENDAR STACK (z-index 10) ─── */
 .calStack {
   position: relative;
   z-index: 10;
@@ -148,25 +413,26 @@
 }
 
 @keyframes windSway {
-  0% { transform: translateX(0px) rotate(0deg); }
-  20% { transform: translateX(1.5px) rotate(0.8deg); }
-  40% { transform: translateX(-1px) rotate(-0.6deg); }
-  60% { transform: translateX(-2px) rotate(-1deg); }
-  80% { transform: translateX(1px) rotate(0.55deg); }
+  0%   { transform: translateX(0px) rotate(0deg); }
+  20%  { transform: translateX(1.5px) rotate(0.8deg); }
+  40%  { transform: translateX(-1px) rotate(-0.6deg); }
+  60%  { transform: translateX(-2px) rotate(-1deg); }
+  80%  { transform: translateX(1px) rotate(0.55deg); }
   100% { transform: translateX(0px) rotate(0deg); }
 }
 
 @keyframes stackWobble {
-  0% { transform: translateX(var(--pull-x, 0px)) rotate(var(--wobble-angle, 4deg)); }
-  16% { transform: translateX(calc(var(--pull-x, 0px) * -0.7)) rotate(calc(var(--wobble-angle, 4deg) * -0.82)); }
-  30% { transform: translateX(calc(var(--pull-x, 0px) * 0.5)) rotate(calc(var(--wobble-angle, 4deg) * 0.6)); }
-  44% { transform: translateX(calc(var(--pull-x, 0px) * -0.35)) rotate(calc(var(--wobble-angle, 4deg) * -0.45)); }
-  58% { transform: translateX(calc(var(--pull-x, 0px) * 0.24)) rotate(calc(var(--wobble-angle, 4deg) * 0.3)); }
-  72% { transform: translateX(calc(var(--pull-x, 0px) * -0.16)) rotate(calc(var(--wobble-angle, 4deg) * -0.2)); }
-  86% { transform: translateX(calc(var(--pull-x, 0px) * 0.08)) rotate(calc(var(--wobble-angle, 4deg) * 0.1)); }
+  0%   { transform: translateX(var(--pull-x, 0px)) rotate(var(--wobble-angle, 4deg)); }
+  16%  { transform: translateX(calc(var(--pull-x, 0px) * -0.7)) rotate(calc(var(--wobble-angle, 4deg) * -0.82)); }
+  30%  { transform: translateX(calc(var(--pull-x, 0px) * 0.5)) rotate(calc(var(--wobble-angle, 4deg) * 0.6)); }
+  44%  { transform: translateX(calc(var(--pull-x, 0px) * -0.35)) rotate(calc(var(--wobble-angle, 4deg) * -0.45)); }
+  58%  { transform: translateX(calc(var(--pull-x, 0px) * 0.24)) rotate(calc(var(--wobble-angle, 4deg) * 0.3)); }
+  72%  { transform: translateX(calc(var(--pull-x, 0px) * -0.16)) rotate(calc(var(--wobble-angle, 4deg) * -0.2)); }
+  86%  { transform: translateX(calc(var(--pull-x, 0px) * 0.08)) rotate(calc(var(--wobble-angle, 4deg) * 0.1)); }
   100% { transform: translateX(0px) rotate(0deg); }
 }
 
+/* ─── PAGE BACKS ─── */
 .pageBack {
   position: absolute;
   border-radius: 0 0 14px 14px;
@@ -174,8 +440,7 @@
 }
 
 .pageBack1 {
-  top: 8px;
-  left: -5px;
+  top: 8px; left: -5px;
   width: calc(100% + 10px);
   height: calc(100% - 8px);
   background: #f0ddb0;
@@ -184,8 +449,7 @@
 }
 
 .pageBack2 {
-  top: 4px;
-  left: -2px;
+  top: 4px; left: -2px;
   width: calc(100% + 4px);
   height: calc(100% - 4px);
   background: #f7e9c8;
@@ -194,13 +458,22 @@
 }
 
 .pageBack3 {
-  top: 2px;
-  left: -1px;
+  top: 2px; left: -1px;
   width: calc(100% + 2px);
   height: calc(100% - 2px);
   background: #faf0d8;
   transform: rotate(-0.3deg);
   z-index: 3;
+}
+
+/* ─── FIX #1: FLIP PERSPECTIVE WRAPPER ─────────────────────────────
+   Removed `perspective: 1400px;` from here to fix the Safari/Chrome 
+   white-box rendering bug. The perspective is properly declared 
+   inside the child's keyframes now.
+   ──────────────────────────────────────────────────────────────── */
+.flipPerspective {
+  position: relative;
+  z-index: 5;
 }
 
 .calPage {
@@ -209,135 +482,66 @@
   background: #fdf6e3;
   border-radius: 0 0 12px 12px;
   border: 2px solid rgba(150, 110, 50, 0.55);
-  overflow: hidden;
-  transform-origin: top center;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-  perspective: 1200px;
+  transform-origin: 50% 0%;
+  will-change: transform, opacity;
+  transform-style: preserve-3d; /* Fixes 3D z-index flattening */
+  backface-visibility: hidden;  /* Ensures correct surface rendering */
+  -webkit-backface-visibility: hidden;
   outline: none;
-  backface-visibility: hidden;
-  transform-style: preserve-3d;
-  will-change: transform, box-shadow, filter;
 }
 
-.calPage::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.11), transparent 34%),
-    radial-gradient(circle at 50% -8%, rgba(255, 255, 255, 0.2), transparent 42%);
-  opacity: 0.42;
-  mix-blend-mode: multiply;
-}
-
+/* ─── FLIP ANIMATIONS ────────────────────────────────────────────── */
 @keyframes pageFlipForward {
-  0% {
-    transform: translateY(0) scale(1) rotateX(0deg) rotateZ(0deg);
-    opacity: 1;
-    filter: brightness(1);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-  50% {
-    transform: translateY(-3px) scale(0.998) rotateX(-4.2deg) rotateZ(0.28deg);
-    opacity: 0.992;
-    filter: brightness(0.993);
-    box-shadow: 0 13px 40px rgba(0, 0, 0, 0.5), 0 4px 11px rgba(0, 0, 0, 0.28);
-  }
-  100% {
-    transform: translateY(-6px) scale(0.996) rotateX(-6.5deg) rotateZ(0.38deg);
-    opacity: 0.985;
-    filter: brightness(0.988);
-    box-shadow: 0 17px 45px rgba(0, 0, 0, 0.52), 0 7px 16px rgba(0, 0, 0, 0.3);
-  }
+  0%   { transform: perspective(1400px) rotateX(0deg)   scaleY(1);    opacity: 1;    box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  35%  { transform: perspective(1400px) rotateX(-38deg) scaleY(0.88); opacity: 0.92; box-shadow: 0 32px 72px rgba(0,0,0,0.65); }
+  70%  { transform: perspective(1400px) rotateX(-74deg) scaleY(0.45); opacity: 0.5;  box-shadow: 0 54px 90px rgba(0,0,0,0.75); }
+  100% { transform: perspective(1400px) rotateX(-90deg) scaleY(0.05); opacity: 0.05; box-shadow: 0 60px 100px rgba(0,0,0,0.8); }
 }
 
 @keyframes pageFlipBack {
-  0% {
-    transform: translateY(5px) scale(1.003) rotateX(5.8deg) rotateZ(-0.35deg);
-    opacity: 0.984;
-    filter: brightness(0.986);
-    box-shadow: 0 17px 42px rgba(0, 0, 0, 0.52), 0 7px 16px rgba(0, 0, 0, 0.3);
-  }
-  65% {
-    transform: translateY(-0.6px) scale(1.0005) rotateX(-0.9deg) rotateZ(0.09deg);
-    opacity: 0.994;
-    filter: brightness(0.996);
-    box-shadow: 0 11px 34px rgba(0, 0, 0, 0.48), 0 3px 10px rgba(0, 0, 0, 0.27);
-  }
-  100% {
-    transform: translateY(0) scale(1) rotateX(0deg) rotateZ(0deg);
-    opacity: 1;
-    filter: brightness(1);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
+  0%   { transform: perspective(1400px) rotateX(90deg)  scaleY(0.05); opacity: 0.05; box-shadow: 0 60px 100px rgba(0,0,0,0.8); }
+  30%  { transform: perspective(1400px) rotateX(74deg)  scaleY(0.45); opacity: 0.5;  box-shadow: 0 54px 90px rgba(0,0,0,0.75); }
+  62%  { transform: perspective(1400px) rotateX(10deg)  scaleY(1.01); opacity: 0.97; box-shadow: 0 20px 52px rgba(0,0,0,0.55); }
+  78%  { transform: perspective(1400px) rotateX(-5deg)  scaleY(1);    opacity: 1;    box-shadow: 0 13px 44px rgba(0,0,0,0.5); }
+  90%  { transform: perspective(1400px) rotateX(2deg)   scaleY(1); }
+  100% { transform: perspective(1400px) rotateX(0deg)   scaleY(1);    opacity: 1;    box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 }
 
 @keyframes pageFlipRevForward {
-  0% {
-    transform: translateY(0) scale(1) rotateX(0deg) rotateZ(0deg);
-    opacity: 1;
-    filter: brightness(1);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-  50% {
-    transform: translateY(3px) scale(0.998) rotateX(4.2deg) rotateZ(-0.28deg);
-    opacity: 0.992;
-    filter: brightness(0.993);
-    box-shadow: 0 13px 40px rgba(0, 0, 0, 0.5), 0 4px 11px rgba(0, 0, 0, 0.28);
-  }
-  100% {
-    transform: translateY(6px) scale(0.996) rotateX(6.5deg) rotateZ(-0.38deg);
-    opacity: 0.985;
-    filter: brightness(0.988);
-    box-shadow: 0 17px 45px rgba(0, 0, 0, 0.52), 0 7px 16px rgba(0, 0, 0, 0.3);
-  }
+  0%   { transform: perspective(1400px) rotateX(0deg)  scaleY(1);    opacity: 1;    box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  35%  { transform: perspective(1400px) rotateX(38deg) scaleY(0.88); opacity: 0.92; box-shadow: 0 32px 72px rgba(0,0,0,0.65); }
+  70%  { transform: perspective(1400px) rotateX(74deg) scaleY(0.45); opacity: 0.5;  box-shadow: 0 54px 90px rgba(0,0,0,0.75); }
+  100% { transform: perspective(1400px) rotateX(90deg) scaleY(0.05); opacity: 0.05; box-shadow: 0 60px 100px rgba(0,0,0,0.8); }
 }
 
 @keyframes pageFlipRevBack {
-  0% {
-    transform: translateY(-5px) scale(1.003) rotateX(-5.8deg) rotateZ(0.35deg);
-    opacity: 0.984;
-    filter: brightness(0.986);
-    box-shadow: 0 17px 42px rgba(0, 0, 0, 0.52), 0 7px 16px rgba(0, 0, 0, 0.3);
-  }
-  65% {
-    transform: translateY(0.6px) scale(1.0005) rotateX(0.9deg) rotateZ(-0.09deg);
-    opacity: 0.994;
-    filter: brightness(0.996);
-    box-shadow: 0 11px 34px rgba(0, 0, 0, 0.48), 0 3px 10px rgba(0, 0, 0, 0.27);
-  }
-  100% {
-    transform: translateY(0) scale(1) rotateX(0deg) rotateZ(0deg);
-    opacity: 1;
-    filter: brightness(1);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
+  0%   { transform: perspective(1400px) rotateX(-90deg) scaleY(0.05); opacity: 0.05; box-shadow: 0 60px 100px rgba(0,0,0,0.8); }
+  30%  { transform: perspective(1400px) rotateX(-74deg) scaleY(0.45); opacity: 0.5;  box-shadow: 0 54px 90px rgba(0,0,0,0.75); }
+  62%  { transform: perspective(1400px) rotateX(-10deg) scaleY(1.01); opacity: 0.97; box-shadow: 0 20px 52px rgba(0,0,0,0.55); }
+  78%  { transform: perspective(1400px) rotateX(5deg)   scaleY(1);    opacity: 1;    box-shadow: 0 13px 44px rgba(0,0,0,0.5); }
+  90%  { transform: perspective(1400px) rotateX(-2deg)  scaleY(1); }
+  100% { transform: perspective(1400px) rotateX(0deg)   scaleY(1);    opacity: 1;    box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 }
 
-.flipOutNext { animation: pageFlipForward 0.34s cubic-bezier(0.22, 0.1, 0.18, 1) forwards; transform-origin: top center; }
-.flipInNext { animation: pageFlipBack 0.4s cubic-bezier(0.14, 0.9, 0.2, 1) forwards; transform-origin: top center; }
-.flipOutPrev { animation: pageFlipRevForward 0.34s cubic-bezier(0.22, 0.1, 0.18, 1) forwards; transform-origin: bottom center; }
-.flipInPrev { animation: pageFlipRevBack 0.4s cubic-bezier(0.14, 0.9, 0.2, 1) forwards; transform-origin: bottom center; }
+.flipOutNext { animation: pageFlipForward    0.38s cubic-bezier(0.5, 0, 0.85, 0.15) forwards; transform-origin: 50% 0%;   }
+.flipInNext  { animation: pageFlipBack       0.52s cubic-bezier(0.08, 0.85, 0.18, 1) forwards; transform-origin: 50% 0%;   }
+.flipOutPrev { animation: pageFlipRevForward 0.38s cubic-bezier(0.5, 0, 0.85, 0.15) forwards; transform-origin: 50% 100%; }
+.flipInPrev  { animation: pageFlipRevBack    0.52s cubic-bezier(0.08, 0.85, 0.18, 1) forwards; transform-origin: 50% 100%; }
 
 @media (max-width: 640px) {
-  .flipOutNext,
-  .flipOutPrev {
-    animation-duration: 0.28s;
-  }
-
-  .flipInNext,
-  .flipInPrev {
-    animation-duration: 0.34s;
-  }
+  .flipOutNext, .flipOutPrev { animation-duration: 0.30s; }
+  .flipInNext,  .flipInPrev  { animation-duration: 0.42s; }
 }
 
+/* ─── HERO ─── */
 .calHero {
   position: relative;
   background: #1c0f07;
   overflow: hidden;
   height: clamp(130px, 28vw, 200px);
   border-bottom: 3px solid rgba(220, 140, 40, 0.6);
+  border-radius: 0;
 }
 
 .heroBgBlur {
@@ -349,17 +553,25 @@
   transform: scale(1.2);
 }
 
+.heroPattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: repeating-linear-gradient(
+    45deg, #df8c2c 0, #df8c2c 1px, transparent 0, transparent 50%
+  );
+  background-size: 8px 8px;
+}
+
 .heroOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(20, 10, 4, 0.95) 0%, rgba(20, 10, 4, 0.6) 50%, rgba(20, 10, 4, 0.1) 100%);
+  background: linear-gradient(90deg, rgba(20,10,4,0.95) 0%, rgba(20,10,4,0.6) 50%, rgba(20,10,4,0.1) 100%);
 }
 
 .heroLeft {
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  left: 0; top: 0; bottom: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -412,26 +624,43 @@
   transition: all 0.15s;
 }
 
-.navBtn:active {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(0.95);
+.navBtn:hover  { background: rgba(255,255,255,0.22); transform: scale(1.06); }
+.navBtn:active { background: rgba(255,255,255,0.3);  transform: scale(0.94); }
+
+.heroDeco {
+  position: absolute;
+  right: 18px; top: 50%;
+  transform: translateY(-50%);
+  font-family: "Caveat Brush", cursive;
+  font-size: clamp(55px, 14vw, 90px);
+  color: #df8c2c;
+  opacity: 0.1;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 2;
+  user-select: none;
 }
 
+/* ─── FIX #2: HERO PORTRAIT ────────────────────────────────────────
+   Added strict width/max-width constraints so `object-fit: contain`
+   doesn't collapse the image bounding box to 0. 
+   ──────────────────────────────────────────────────────────────── */
 .heroPortrait {
   position: absolute;
-  right: 0;
-  bottom: 0;
+  right: 0; bottom: 0;
   height: 115%;
+  width: auto;
+  max-width: 45%; 
   z-index: 4;
   object-fit: contain;
-  object-position: bottom center;
-  filter: drop-shadow(-8px 0 20px rgba(0, 0, 0, 0.5));
+  object-position: bottom right;
+  filter: drop-shadow(-8px 0 20px rgba(0,0,0,0.5));
+  pointer-events: none;
 }
 
 .heroSwipeHint {
   position: absolute;
-  bottom: 6px;
-  left: 50%;
+  bottom: 6px; left: 50%;
   transform: translateX(-50%);
   font-size: 10px;
   color: rgba(253, 246, 227, 0.3);
@@ -440,6 +669,7 @@
   z-index: 6;
 }
 
+/* ─── BODY ─── */
 .calBody {
   display: grid;
   grid-template-columns: 1fr 2.2fr;
@@ -494,14 +724,9 @@
   width: 100%;
 }
 
-.noteInp::placeholder {
-  color: #c0a870;
-  font-style: normal;
-}
+.noteInp::placeholder { color: #c0a870; }
 
-.gridCol {
-  padding: 10px 12px 12px;
-}
+.gridCol { padding: 10px 12px 12px; }
 
 .dayNames {
   display: grid;
@@ -518,9 +743,7 @@
   padding: 2px 0;
 }
 
-.sun {
-  color: #b83020;
-}
+.sun { color: #b83020; }
 
 .calGrid {
   display: grid;
@@ -533,7 +756,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
 }
 
 .dayBtn {
@@ -555,42 +777,18 @@
   justify-content: center;
 }
 
-.dayBtn:hover {
-  background: rgba(223, 140, 44, 0.18);
-}
+.dayBtn:hover    { background: rgba(223, 140, 44, 0.18); }
+.dayBtn:disabled { cursor: default; }
 
-.dayBtn:disabled {
-  cursor: default;
-}
+.other   { color: #c0a870; opacity: 0.45; }
+.today   { background: rgba(223, 140, 44, 0.22); color: #7a4a08; font-weight: 700; }
+.hasNote { background: #df8c2c; color: #fff; font-weight: 700; border-radius: 6px; box-shadow: 0 1px 6px rgba(223,140,44,0.4); }
 
-.other {
-  color: #c0a870;
-  opacity: 0.45;
-}
-
-.today {
-  background: rgba(223, 140, 44, 0.22);
-  color: #7a4a08;
-  font-weight: 700;
-}
-
-.hasNote {
-  background: #df8c2c;
-  color: #fff;
-  font-weight: 700;
-  border-radius: 6px;
-  box-shadow: 0 1px 6px rgba(223, 140, 44, 0.4);
-}
-
-.sunCol .dayBtn {
-  color: #b83020;
-}
-
+.sunCol .dayBtn             { color: #b83020; }
 .sunCol .dayBtn.hasNote,
-.sunCol .dayBtn.today {
-  color: #fff;
-}
+.sunCol .dayBtn.today       { color: #fff; }
 
+/* ─── MODAL ─── */
 .overlay {
   position: fixed;
   inset: 0;
@@ -613,25 +811,9 @@
   border: 2px solid rgba(150, 110, 50, 0.45);
 }
 
-.modalSub {
-  font-size: 10px;
-  color: #a07840;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.modalDate {
-  font-family: "Caveat Brush", cursive;
-  font-size: 24px;
-  color: #3a2a10;
-  margin-bottom: 16px;
-}
-
-.modalLines {
-  display: flex;
-  flex-direction: column;
-}
+.modalSub  { font-size: 10px; color: #a07840; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 4px; }
+.modalDate { font-family: "Caveat Brush", cursive; font-size: 24px; color: #3a2a10; margin-bottom: 16px; }
+.modalLines { display: flex; flex-direction: column; }
 
 .modalInp {
   background: transparent;
@@ -645,17 +827,9 @@
   width: 100%;
 }
 
-.modalInp::placeholder {
-  color: #c0a870;
-  font-style: normal;
-}
+.modalInp::placeholder { color: #c0a870; }
 
-.modalActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 18px;
-}
+.modalActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 
 .btnCancel {
   background: transparent;
@@ -684,8 +858,7 @@
 
 .closeBtn {
   position: absolute;
-  top: 12px;
-  right: 14px;
+  top: 12px; right: 14px;
   background: none;
   border: none;
   font-size: 20px;
@@ -695,13 +868,6 @@
 }
 
 @media (max-width: 500px) {
-  .calBody {
-    grid-template-columns: 1fr;
-  }
-
-  .notesCol {
-    border-right: none;
-    border-bottom: 1.5px dashed rgba(150, 110, 50, 0.35);
-    padding-bottom: 10px;
-  }
+  .calBody  { grid-template-columns: 1fr; }
+  .notesCol { border-right: none; border-bottom: 1.5px dashed rgba(150,110,50,0.35); padding-bottom: 10px; }
 }
