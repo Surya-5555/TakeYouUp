@@ -1,344 +1,401 @@
 "use client";
 
-import React, { useState } from "react";
-import { format, isSameMonth, isSameDay, getDay, parseISO, isAfter, isBefore, addMonths, subMonths } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
+import {
+  addDays,
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameDay,
+  isSameMonth,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+  subMonths,
+} from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCalendarStore } from "@/store/useCalendarStore";
-import { generateCalendarGrid, dayNames } from "@/lib/dateUtils";
+import styles from "./TrendyCalendar.module.css";
+
+type FlipPhase = "idle" | "outNext" | "outPrev" | "inNext" | "inPrev";
+
+const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+function getFlipClass(phase: FlipPhase): string {
+  if (phase === "outNext") return styles.flipOutNext;
+  if (phase === "inNext") return styles.flipInNext;
+  if (phase === "outPrev") return styles.flipOutPrev;
+  if (phase === "inPrev") return styles.flipInPrev;
+  return "";
+}
+
+function buildMonthCells(currentMonth: Date): Date[] {
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+
+  const cells: Date[] = [];
+  let cursor = gridStart;
+
+  while (cursor <= gridEnd) {
+    cells.push(cursor);
+    cursor = addDays(cursor, 1);
+  }
+
+  return cells;
+}
 
 export function TrendyCalendar() {
   const {
-    currentMonth: curMonthStr,
-    rangeStart: startStr,
-    rangeEnd: endStr,
+    currentMonth: currentMonthIso,
     monthNotes,
     dayNotes,
     setCurrentMonth,
-    setRangeStart,
-    setRangeEnd,
     setMonthNote,
-    setDayNote,
-    setFullDayNote
+    setFullDayNote,
   } = useCalendarStore();
 
-  const [hasMounted, setHasMounted] = React.useState(false);
+  const [phase, setPhase] = useState<FlipPhase>("idle");
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [draftNotes, setDraftNotes] = useState<string[]>(["", "", "", "", ""]);
+  const [pullAngle, setPullAngle] = useState(0);
+  const [pullX, setPullX] = useState(0);
+  const [isPulled, setIsPulled] = useState(false);
+  const [isWobbling, setIsWobbling] = useState(false);
+  const [wobbleAmp, setWobbleAmp] = useState(0);
 
-  React.useEffect(() => {
-    setHasMounted(true);
+  const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
+  const mouseDownY = useRef(0);
+  const mouseDownX = useRef(0);
+  const dragging = useRef(false);
+  const livePullAngle = useRef(0);
+  const livePullX = useRef(0);
+  const wobbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const currentMonth = parseISO(currentMonthIso);
+  const monthKey = format(currentMonth, "yyyy-MM");
+  const monthMemo = (monthNotes[monthKey] || Array(6).fill("")) as string[];
+  const cells = buildMonthCells(currentMonth);
+
+  const beginFlip = (dir: 1 | -1) => {
+    if (phase !== "idle") return;
+    setPhase(dir > 0 ? "outNext" : "outPrev");
+  };
+
+  const changeMonthImmediate = (dir: 1 | -1) => {
+    setCurrentMonth(dir > 0 ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1));
+  };
+
+  const handleAnimationEnd = () => {
+    if (phase === "outNext") {
+      changeMonthImmediate(1);
+      setPhase("inNext");
+      return;
+    }
+    if (phase === "outPrev") {
+      changeMonthImmediate(-1);
+      setPhase("inPrev");
+      return;
+    }
+    if (phase === "inNext" || phase === "inPrev") {
+      setPhase("idle");
+    }
+  };
+
+  const openDay = (date: Date) => {
+    if (!isSameMonth(date, currentMonth)) return;
+    const dateKey = format(date, "yyyy-MM-dd");
+    setSelectedDateKey(dateKey);
+    setDraftNotes(dayNotes[dateKey] || ["", "", "", "", ""]);
+    setOverlayOpen(true);
+  };
+
+  const closeDay = () => {
+    setOverlayOpen(false);
+    setSelectedDateKey(null);
+  };
+
+  const saveDayNotes = () => {
+    if (!selectedDateKey) return;
+    setFullDayNote(selectedDateKey, draftNotes);
+    closeDay();
+  };
+
+  const updatePull = (clientX: number) => {
+    if (!dragging.current) return;
+
+    const dx = clientX - mouseDownX.current;
+    const angle = Math.max(-8, Math.min(8, dx * 0.05));
+    const shift = Math.max(-12, Math.min(12, dx * 0.25));
+
+    livePullAngle.current = angle;
+    livePullX.current = shift;
+    setPullAngle(angle);
+    setPullX(shift);
+    setIsPulled(true);
+  };
+
+  const releasePull = () => {
+    const amp = Math.min(8, Math.abs(livePullAngle.current));
+    setPullAngle(0);
+    setPullX(0);
+    setIsPulled(false);
+
+    if (amp < 0.7) {
+      livePullAngle.current = 0;
+      livePullX.current = 0;
+      return;
+    }
+
+    setWobbleAmp(amp);
+    setIsWobbling(true);
+    if (wobbleTimerRef.current) clearTimeout(wobbleTimerRef.current);
+    wobbleTimerRef.current = setTimeout(() => {
+      setIsWobbling(false);
+      setWobbleAmp(0);
+    }, 1800);
+
+    livePullAngle.current = 0;
+    livePullX.current = 0;
+  };
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      updatePull(e.clientX);
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      releasePull();
+
+      const dy = mouseDownY.current - e.clientY;
+      if (Math.abs(dy) <= 70) return;
+      setPhase((prev) => {
+        if (prev !== "idle") return prev;
+        return dy > 0 ? "outNext" : "outPrev";
+      });
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      if (wobbleTimerRef.current) clearTimeout(wobbleTimerRef.current);
+    };
   }, []);
 
-  // Sync draftNotes when a day is opened
-  React.useEffect(() => {
-    if (rangeStartObj) {
-      const key = format(rangeStartObj, "yyyy-MM-dd");
-      setDraftNotes(dayNotes[key] || ["", "", "", "", ""]);
-    }
-  }, [startStr, dayNotes]); // startStr is the trigger
-
-  const handleSaveDayNotes = () => {
-    if (rangeStartObj) {
-      const key = format(rangeStartObj, "yyyy-MM-dd");
-      setFullDayNote(key, draftNotes);
-      setRangeStart(null);
-    }
-  };
-
-  const [direction, setDirection] = useState(0);
-
-  const changeMonth = (dir: number) => {
-    setDirection(dir);
-    setCurrentMonth(dir > 0 ? addMonths(parseISO(curMonthStr), 1) : subMonths(parseISO(curMonthStr), 1));
-  };
-
-  const currentMonth = parseISO(curMonthStr);
-  const currentMonthKey = format(currentMonth, "yyyy-MM");
-  const rangeStartObj = startStr ? parseISO(startStr) : null;
-  const rangeEndObj = endStr ? parseISO(endStr) : null;
-
-  const monthNotesData = (monthNotes[currentMonthKey] || ["", "", "", ""]).slice(0, 4);
-  const rows = generateCalendarGrid(currentMonth);
-
-  const handleDateClick = (date: Date) => {
-    if (!startStr || (startStr && endStr)) {
-      setRangeStart(date);
-      setRangeEnd(null);
-    } else if (rangeStartObj && !rangeEndObj) {
-      if (isBefore(date, rangeStartObj)) {
-        setRangeStart(date);
-      } else {
-        setRangeEnd(date);
-      }
-    }
-  };
-
-  const isInRange = (date: Date) => {
-    if (!rangeStartObj || !rangeEndObj) return false;
-    return isAfter(date, rangeStartObj) && isBefore(date, rangeEndObj);
-  };
-
-  const isSelected = (date: Date) => {
-    return (rangeStartObj && isSameDay(date, rangeStartObj)) || (rangeEndObj && isSameDay(date, rangeEndObj));
-  };
-
-  if (!hasMounted) return null;
-
-  const flipVariants = {
-    enter: (direction: number) => ({
-      rotateX: direction > 0 ? -90 : 90,
-      opacity: 0,
-      y: direction > 0 ? 50 : -50,
-      scale: 0.95
-    }),
-    center: {
-      rotateX: 0,
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { type: "spring" as const, stiffness: 220, damping: 25 }
-    },
-    exit: (direction: number) => ({
-      rotateX: direction < 0 ? -90 : 90,
-      opacity: 0,
-      y: direction < 0 ? 50 : -50,
-      scale: 0.95,
-      transition: { type: "spring" as const, stiffness: 220, damping: 25 }
-    })
-  };
+  const selectedDateObj = selectedDateKey ? parseISO(`${selectedDateKey}T00:00:00`) : null;
+  const today = new Date();
 
   return (
-    <div className="relative flex flex-col items-center w-full">
-      {/* 3D Spiral Binding Header */}
-      <div className="relative w-full max-w-[95%] md:max-w-[1000px] z-30 flex flex-col items-center justify-end h-[40px] md:h-[45px] -mb-[6px] pointer-events-none drop-shadow-xl">
-        {/* Wall Hook */}
-        <div className="w-[8px] md:w-[10px] h-[12px] md:h-[16px] bg-gradient-to-b from-[#e6c255] via-[#ca9e2e] to-[#735414] rounded-sm absolute top-[-6px] md:top-[-8px] shadow-[0_4px_6px_rgba(0,0,0,0.4)] z-0" />
+    <div className={styles.scene}>
+      <svg className={styles.brickBg} xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-hidden="true">
+        <defs>
+          <filter id="rough">
+            <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="4" seed="5" />
+            <feDisplacementMap in="SourceGraphic" scale="1.8" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <pattern id="bricks" x="0" y="0" width="90" height="38" patternUnits="userSpaceOnUse">
+            <rect x="1" y="1" width="86" height="16" rx="1" fill="#3a1e10" stroke="#200e05" strokeWidth="0.8" filter="url(#rough)" />
+            <rect x="-44" y="20" width="86" height="16" rx="1" fill="#371c0e" stroke="#200e05" strokeWidth="0.8" filter="url(#rough)" />
+            <rect x="46" y="20" width="86" height="16" rx="1" fill="#3c2012" stroke="#200e05" strokeWidth="0.8" filter="url(#rough)" />
+            <line x1="0" y1="18.5" x2="90" y2="18.5" stroke="#180a04" strokeWidth="1.8" opacity="0.75" />
+            <line x1="0" y1="37.5" x2="90" y2="37.5" stroke="#180a04" strokeWidth="1.8" opacity="0.75" />
+            <line x1="0" y1="0" x2="90" y2="0" stroke="#180a04" strokeWidth="1.8" opacity="0.75" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#bricks)" />
+        <rect width="100%" height="100%" fill="rgba(0,0,0,0.22)" />
+      </svg>
 
-        {/* Main Hanger Wire */}
-        <svg className="absolute top-[2px] w-[60px] md:w-[70px] h-[25px] md:h-[30px] z-10 overflow-visible" viewBox="0 0 80 36" fill="none">
-          <path d="M40 0 C 44 0, 45 4, 46 10 L 52 26 C 54 32, 56 36, 68 36 L 80 36" stroke="url(#wireGrad)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M40 0 C 36 0, 35 4, 34 10 L 28 26 C 26 32, 24 36, 12 36 L 0 36" stroke="url(#wireGrad)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-          <defs>
-            <linearGradient id="wireGrad" x1="0" y1="0" x2="0" y2="36" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#f3d06a" /><stop offset="50%" stopColor="#d4af37" /><stop offset="100%" stopColor="#8c6a18" />
-            </linearGradient>
-          </defs>
-        </svg>
+      <div className={styles.wallVignette} aria-hidden="true" />
 
-        {/* Coils */}
-        <div className="flex w-full justify-between items-end px-[16px] md:px-[32px] z-20 h-full">
-          {Array.from({ length: 50 }).map((_, i) => {
-            if (i === 24 || i === 25) return <div key={i} className="w-[6px] md:w-[8px]" />;
-            return (
-              <div key={i} className="relative w-[5px] md:w-[7px] h-[14px] md:h-[18px] flex items-end justify-center">
-                <div className="absolute bottom-[2px] w-[3px] md:w-[5px] h-[6px] md:h-[8px] bg-[#1a1a1c] shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] rounded-full z-0" />
-                <svg className="absolute bottom-[4px] w-[9px] md:w-[11px] h-[16px] md:h-[20px] z-10 overflow-visible drop-shadow-[0_2px_1px_rgba(0,0,0,0.5)]" viewBox="0 0 14 24" fill="none"><path d="M 2 24 C -2 18, -2 4, 6 2 C 14 0, 16 10, 10 24" stroke="url(#coilGrad)" strokeWidth="3" strokeLinecap="round" /><defs><linearGradient id="coilGrad" x1="0" y1="0" x2="14" y2="24" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#fef0a5" /><stop offset="30%" stopColor="#e3ba3c" /><stop offset="80%" stopColor="#a37616" /><stop offset="100%" stopColor="#573e04" /></linearGradient></defs></svg>
-              </div>
-            );
-          })}
+      <div className={styles.hanger} aria-hidden="true">
+        <div className={styles.hook} />
+        <div className={styles.wireRow}>
+          {Array.from({ length: 42 }).map((_, idx) => (
+            <div key={idx} className={styles.coil} />
+          ))}
         </div>
       </div>
 
-      <div className="w-[95%] max-w-[1000px] relative font-sans select-none" style={{ perspective: "1500px" }}>
-        <AnimatePresence mode="popLayout" initial={false} custom={direction}>
-          <motion.div
-            key={currentMonth.toISOString()}
-            custom={direction}
-            variants={flipVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.4}
-            onDragEnd={(e, { offset, velocity }) => {
-              if (offset.y < -100 || velocity.y < -400) {
-                changeMonth(1); // Swipe UP (flip page away) -> Next Month
-              } else if (offset.y > 100 || velocity.y > 400) {
-                changeMonth(-1); // Swipe DOWN (flip back) -> Prev Month
-              }
-            }}
-            className="relative w-full bg-[#313235] shadow-2xl overflow-hidden pb-4 cursor-grab active:cursor-grabbing origin-top z-20 rounded-b-[16px]"
-          >
-            {/* Hero Section Container */}
-            <div className="relative w-full h-[180px] md:h-[280px] z-20 pointer-events-none">
-              <div className="w-full h-full bg-[#1a1a1c] relative overflow-hidden" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 15px), 50% 100%, 0 calc(100% - 15px))" }}>
-                {/* Branded Title */}
-                <div className="absolute top-4 left-6 z-30 pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                  <h1 className="text-white text-[14px] md:text-[20px] font-black tracking-[0.4em] uppercase opacity-95">TAKE YOU UP</h1>
-                  <div className="w-12 h-[2px] bg-[#df8c2c] mt-1 shadow-lg" />
-                </div>
+      <div
+        className={`${styles.calStack} ${isPulled ? styles.calStackPulled : ""} ${isWobbling ? styles.calStackWobble : ""}`}
+        style={{
+          "--pull-angle": `${pullAngle}deg`,
+          "--pull-x": `${pullX}px`,
+          "--wobble-angle": `${wobbleAmp}deg`,
+        } as React.CSSProperties}
+      >
+        <div className={`${styles.pageBack} ${styles.pageBack1}`} />
+        <div className={`${styles.pageBack} ${styles.pageBack2}`} />
+        <div className={`${styles.pageBack} ${styles.pageBack3}`} />
 
-                {/* Cinematic Blurred Background */}
-                <img src="/portrait.png" className="absolute inset-0 w-full h-full object-cover blur-xl opacity-50 scale-125" />
-                <div className="absolute inset-0 bg-black/10" />
+        <section
+          className={`${styles.calPage} ${getFlipClass(phase)}`}
+          onAnimationEnd={handleAnimationEnd}
+          onTouchStart={(e) => {
+            touchStartY.current = e.touches[0].clientY;
+            touchStartX.current = e.touches[0].clientX;
+            mouseDownX.current = e.touches[0].clientX;
+            setIsWobbling(false);
+            if (wobbleTimerRef.current) clearTimeout(wobbleTimerRef.current);
+            dragging.current = true;
+          }}
+          onTouchMove={(e) => {
+            updatePull(e.touches[0].clientX);
+          }}
+          onTouchEnd={(e) => {
+            dragging.current = false;
+            releasePull();
 
-                {/* Main Uncropped Portrait */}
-                <img src="/portrait.png" className="absolute inset-0 w-full h-[120%] -top-[10%] object-contain object-center z-10 drop-shadow-2xl" />
+            const dy = touchStartY.current - e.changedTouches[0].clientY;
+            if (Math.abs(dy) <= 55) return;
+            beginFlip(dy > 0 ? 1 : -1);
+          }}
+          onMouseDown={(e) => {
+            mouseDownY.current = e.clientY;
+            mouseDownX.current = e.clientX;
+            dragging.current = true;
+            setIsWobbling(false);
+            if (wobbleTimerRef.current) clearTimeout(wobbleTimerRef.current);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowLeft") beginFlip(-1);
+            if (e.key === "ArrowRight") beginFlip(1);
+          }}
+          tabIndex={0}
+          aria-label="Monthly planner calendar"
+        >
+          <div className={styles.calHero}>
+            <div className={styles.heroBgBlur} style={{ backgroundImage: "url('/portrait.png')" }} />
+            <div className={styles.heroOverlay} />
 
-                <div className="absolute bottom-0 left-0 w-full h-[80px] bg-gradient-to-t from-[#3a3b40] via-[#3a3b40]/80 to-transparent z-20 pointer-events-none" />
+            <div className={styles.heroLeft}>
+              <div className={styles.heroEyebrow}>Monthly Planner</div>
+              <div className={styles.heroMonth}>{format(currentMonth, "MMMM")}</div>
+              <div className={styles.heroYear}>{format(currentMonth, "yyyy")}</div>
+              <div className={styles.heroNav}>
+                <button
+                  className={styles.navBtn}
+                  onClick={() => beginFlip(-1)}
+                  aria-label="Previous month"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  className={styles.navBtn}
+                  onClick={() => beginFlip(1)}
+                  aria-label="Next month"
+                >
+                  <ChevronRight size={20} />
+                </button>
               </div>
-
-              {/* V-Notch White Separator Line */}
-              <svg viewBox="0 0 1000 15" preserveAspectRatio="none" className="absolute bottom-0 left-0 w-full h-[15px] z-30 pointer-events-none opacity-40">
-                <polyline points="0,0 500,14.5 1000,0" stroke="white" strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" />
-              </svg>
             </div>
 
-            <div className="flex flex-col md:flex-row w-full pt-1 md:pt-2 px-6 md:px-12 gap-8 md:gap-16 relative z-10">
+            <img src="/portrait.png" alt="Portrait" className={styles.heroPortrait} />
+            <div className={styles.heroSwipeHint}>swipe up/down or drag to flip pages</div>
+          </div>
 
-              {/* LEFT: 月份备注 Section (5 Lines) */}
-              <div className="md:flex-[0.25] flex flex-col mt-1 md:pr-10 border-b md:border-b-0 md:border-r border-white/30 pb-2 md:pb-0">
-                <h3 className="text-[10px] md:text-[11px] font-bold text-white/90 tracking-widest mb-2 uppercase">Monthly Schedule</h3>
-                <div className="flex flex-col gap-2 md:gap-6 mt-2 md:mt-4">
-                  {monthNotesData.map((note, i) => (
+          <div className={styles.calBody}>
+            <aside className={styles.notesCol}>
+              <div className={styles.notesLabel}>Monthly notes</div>
+              <div className={styles.noteLinesList}>
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <div key={idx} className={styles.noteLineItem}>
+                    <div className={styles.noteBullet} />
                     <input
-                      key={i}
-                      value={note}
-                      onChange={(e) => setMonthNote(currentMonthKey, i, e.target.value)}
-                      placeholder={`Memo line ${i + 1}`}
-                      className="w-full bg-transparent border-b border-white/40 h-8 md:h-10 text-white/90 placeholder:text-white/30 italic text-[13px] md:text-[15px] focus:outline-none focus:border-[#df8c2c] transition-all font-serif cursor-text"
-                      onPointerDownCapture={(e) => e.stopPropagation()} // Prevent drag conflict
+                      className={styles.noteInp}
+                      type="text"
+                      value={monthMemo[idx] || ""}
+                      placeholder={idx === 0 ? "Add a note..." : "..."}
+                      onChange={(e) => setMonthNote(monthKey, idx, e.target.value)}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      aria-label={`Monthly note line ${idx + 1}`}
                     />
-                  ))}
-                </div>
+                  </div>
+                ))}
+              </div>
+            </aside>
+
+            <div className={styles.gridCol}>
+              <div className={styles.dayNames}>
+                {DAY_NAMES.map((day, idx) => (
+                  <div key={day} className={`${styles.dayName} ${idx === 0 ? styles.sun : ""}`}>
+                    {day}
+                  </div>
+                ))}
               </div>
 
-              {/* RIGHT: Calendar Grid */}
-              <div className="md:flex-[0.75] flex flex-col md:pl-6">
-                <div className="flex items-center justify-between pb-1 md:pb-2">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => changeMonth(-1)}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      className="p-1 rounded-full text-[#a0a0a0] hover:text-white hover:bg-white/10 transition-colors z-30"
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <h2 className="text-[16px] md:text-[20px] font-semibold text-white tracking-[0.2em] uppercase">{format(currentMonth, "yyyy MMMM")}</h2>
-                    <button
-                      onClick={() => changeMonth(1)}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      className="p-1 rounded-full text-[#a0a0a0] hover:text-white hover:bg-white/10 transition-colors z-30"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </div>
-                </div>
+              <div className={styles.calGrid}>
+                {cells.map((date, idx) => {
+                  const dateKey = format(date, "yyyy-MM-dd");
+                  const inMonth = isSameMonth(date, currentMonth);
+                  const isToday = isSameDay(date, today);
+                  const hasNote = (dayNotes[dateKey] || []).some((n) => n.trim().length > 0);
+                  const col = idx % 7;
 
-                <div className="grid grid-cols-7 px-0 pb-2 border-b border-white/20 mb-2">
-                  {dayNames.map((name) => <div key={name} className="text-[10px] md:text-[11px] font-bold tracking-widest text-center text-[#e0e0e0] opacity-80">{name}</div>)}
-                </div>
-
-                <div className="flex flex-col">
-                  {rows.map((week, weekIndex) => {
-                    return (
-                      <React.Fragment key={weekIndex}>
-                        <div className="grid grid-cols-7 px-1 py-0 relative z-20 bg-[#313235]">
-                          {week.map((date, dayIndex) => {
-                            const isSelectedDate = isSelected(date);
-                            const isDayInRange = isInRange(date);
-                            const isCurrMonth = isSameMonth(date, currentMonth);
-                            const dateKey = format(date, "yyyy-MM-dd");
-                            const hasNote = dayNotes[dateKey]?.some(n => n.trim().length > 0);
-
-                            return (
-                              <div key={dayIndex} className="relative flex justify-center py-1 md:py-[6px]">
-                                <button
-                                  onClick={() => handleDateClick(date)}
-                                  onPointerDown={(e) => e.stopPropagation()}
-                                  suppressHydrationWarning
-                                  className={cn(
-                                    "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center border rounded-sm text-[12px] md:text-[14px] transition-all relative z-10",
-                                    !isCurrMonth ? "text-[#a0a0a0]/30 border-white/5" : "text-white font-medium border-white/15 hover:border-white/40 hover:bg-white/5",
-                                    isSelectedDate ? "text-[#3a3b40] font-black tracking-widest border-transparent" : "",
-                                    isDayInRange && !isSelectedDate && !hasNote ? "bg-[#df8c2c]/20 border-[#df8c2c]/30 text-white" : "",
-                                    hasNote && !isSelectedDate ? "bg-[#df8c2c]/90 text-[#1a1a1c] font-black border-[#df8c2c] shadow-[0_0_10px_rgba(223,140,44,0.3)]" : ""
-                                  )}
-                                >
-                                  {format(date, "d")}
-                                </button>
-                                {isSelectedDate && (
-                                  <motion.div layoutId="sel" className="absolute inset-0 m-auto w-8 h-8 md:w-10 md:h-10 rounded-sm bg-white z-0 shadow-lg shadow-white/20" />
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
+                  return (
+                    <div key={dateKey} className={`${styles.dayCell} ${col === 0 ? styles.sunCol : ""}`}>
+                      <button
+                        className={`${styles.dayBtn} ${!inMonth ? styles.other : ""} ${isToday ? styles.today : ""} ${hasNote ? styles.hasNote : ""}`}
+                        onClick={() => openDay(date)}
+                        disabled={!inMonth}
+                        aria-label={format(date, "EEEE, MMMM d, yyyy")}
+                      >
+                        {format(date, "d")}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        </section>
       </div>
 
-      {/* Daily Agenda Popup */}
-      <AnimatePresence>
-        {startStr && !endStr && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setRangeStart(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
+      {overlayOpen && (
+        <div className={styles.overlay} onClick={closeDay}>
+          <div className={styles.notepadModal} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.closeBtn} onClick={closeDay} aria-label="Close notes">
+              x
+            </button>
+            <div className={styles.modalSub}>Daily agenda</div>
+            <div className={styles.modalDate}>
+              {selectedDateObj ? format(selectedDateObj, "MMMM d, yyyy") : ""}
+            </div>
 
-            {/* Notepad Modal */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-[#fcfaf2] w-full max-w-[400px] rounded-2xl p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative border border-black/5 overflow-hidden"
-            >
-              <div className="relative">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Today's Agenda</h4>
-                    <p className="text-[18px] font-serif font-bold text-gray-800">{rangeStartObj && format(rangeStartObj, "MMMM do, yyyy")}</p>
-                  </div>
-                  <button
-                    onClick={() => setRangeStart(null)}
-                    className="p-2 hover:bg-black/5 rounded-full transition-colors text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
-                </div>
+            <div className={styles.modalLines}>
+              {["What's the plan?", "...", "...", "...", "..."].map((placeholder, idx) => (
+                <input
+                  key={idx}
+                  className={styles.modalInp}
+                  value={draftNotes[idx] || ""}
+                  placeholder={placeholder}
+                  onChange={(e) => {
+                    const next = [...draftNotes];
+                    next[idx] = e.target.value;
+                    setDraftNotes(next);
+                  }}
+                  aria-label={`Daily note line ${idx + 1}`}
+                />
+              ))}
+            </div>
 
-                <div className="flex flex-col gap-1">
-                  {draftNotes.map((val, i) => (
-                    <input
-                      key={i}
-                      value={val}
-                      onChange={(e) => {
-                        const next = [...draftNotes];
-                        next[i] = e.target.value;
-                        setDraftNotes(next);
-                      }}
-                      placeholder={i === 0 ? "What's the plan?" : "..."}
-                      className="w-full bg-transparent border-b border-black/20 h-10 text-black/80 focus:outline-none focus:border-black/50 placeholder:text-black/30 font-serif text-[16px] transition-colors"
-                    />
-                  ))}
-                </div>
-
-                <div className="mt-8 flex justify-end">
-                  <button
-                    onClick={handleSaveDayNotes}
-                    className="bg-[#df8c2c] text-white px-6 py-2 rounded-full text-[12px] font-black uppercase tracking-widest shadow-lg shadow-[#df8c2c]/30 hover:scale-105 transition-transform"
-                  >
-                    Save Note
-                  </button>
-                </div>
-              </div>
-            </motion.div>
+            <div className={styles.modalActions}>
+              <button className={styles.btnCancel} onClick={closeDay}>Cancel</button>
+              <button className={styles.btnSave} onClick={saveDayNotes}>Save</button>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }
