@@ -220,7 +220,7 @@ export function TrendyCalendar() {
   const selectedDate = selectedDateIsoKey ? parseISO(`${selectedDateIsoKey}T00:00:00`) : null;
 
   return (
-    <div className="relative flex h-[100dvh] flex-col items-center justify-start overflow-hidden bg-[#1e0e06] px-3 pt-4">
+    <div className="relative flex min-h-[100dvh] flex-col items-center justify-start overflow-x-hidden overflow-y-auto bg-[#1e0e06] px-3 pb-8 pt-4">
       <svg className={styles.brickBg} xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-hidden="true">
         <defs>
           <filter id="rough">
@@ -370,7 +370,7 @@ export function TrendyCalendar() {
             tabIndex={0}
             aria-label="Monthly planner calendar"
           >
-            <div className="relative h-[clamp(130px,28vw,200px)] overflow-hidden rounded-none border-b-[3px] border-b-[rgba(220,140,40,0.6)] bg-[#1c0f07]">
+            <div className="relative h-[clamp(140px,32vw,200px)] overflow-hidden rounded-none border-b-[3px] border-b-[rgba(220,140,40,0.6)] bg-[#1c0f07]">
               <div className={styles.heroBgBlur} style={{ backgroundImage: "url('/portrait.png')" }} />
               <div className={styles.heroPattern} />
               <div className={styles.heroOverlay} />
@@ -399,7 +399,10 @@ export function TrendyCalendar() {
 
               <img src="/portrait.png" alt="Portrait" className={styles.heroPortrait} />
 
-              <div className={styles.heroSwipeHint}>Use left/right icons or drag to flip pages</div>
+              <div className={styles.heroSwipeHint}>
+                Use left/right icons <span className="md:inline hidden">or drag</span>
+                <span className="md:hidden block">or drag</span> to flip pages
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-[1fr_2.2fr]">
@@ -445,7 +448,7 @@ export function TrendyCalendar() {
                     return (
                       <div key={dateKey} className={`flex aspect-square items-center justify-center ${col === 0 ? styles.sunCol : ""}`}>
                         <button
-                          className={`flex min-h-11 min-w-11 aspect-square w-[min(90%,48px)] items-center justify-center rounded-[5px] border-none bg-transparent font-['Caveat'] text-[clamp(12px,3vw,16px)] font-semibold text-[#3a2a10] transition-all duration-[120ms] hover:bg-[rgba(223,140,44,0.18)] disabled:cursor-default ${!inMonth ? styles.other : ""} ${isToday ? styles.today : ""} ${hasNote ? styles.hasNote : ""}`}
+                          className={`flex min-h-11 min-w-11 aspect-square w-[min(90%,48px)] items-center justify-center rounded-[5px] border-none bg-transparent font-sans text-[clamp(12px,3vw,16px)] font-semibold text-[#3a2a10] transition-all duration-[120ms] hover:bg-[rgba(223,140,44,0.18)] disabled:cursor-default ${!inMonth ? styles.other : ""} ${isToday ? styles.today : ""} ${hasNote ? styles.hasNote : ""}`}
                           onClick={() => openDayNotesModal(date)}
                           disabled={!inMonth}
                           aria-label={format(date, "EEEE, MMMM d, yyyy")}
