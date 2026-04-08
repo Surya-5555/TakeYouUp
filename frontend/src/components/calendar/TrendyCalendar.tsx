@@ -40,7 +40,7 @@ export function TrendyCalendar() {
   const rangeStart = startStr ? parseISO(startStr) : null;
   const rangeEnd = endStr ? parseISO(endStr) : null;
 
-  const monthNotesData = monthNotes[currentMonthKey] || ["", "", "", "", ""];
+  const monthNotesData = (monthNotes[currentMonthKey] || ["", "", "", ""]).slice(0, 4);
   const rows = generateCalendarGrid(currentMonth);
 
   const handleDateClick = (date: Date) => {
@@ -123,9 +123,6 @@ export function TrendyCalendar() {
       </div>
 
       <div className="w-[95%] max-w-[1000px] relative font-sans select-none" style={{ perspective: "1500px" }}>
-        {/* Invisible Ghost layer to maintain height during 3D absolute flips */}
-        <div className="invisible pointer-events-none opacity-0 pb-4 h-[740px] md:h-[510px] w-full" aria-hidden="true"></div>
-
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           <motion.div
             key={currentMonth.toISOString()}
@@ -144,7 +141,7 @@ export function TrendyCalendar() {
                 changeMonth(-1); // Swipe DOWN (flip back) -> Prev Month
               }
             }}
-            className="absolute top-0 left-0 w-full bg-[#313235] shadow-2xl overflow-hidden pb-4 cursor-grab active:cursor-grabbing origin-top z-20"
+            className="relative w-full bg-[#313235] shadow-2xl overflow-hidden pb-4 cursor-grab active:cursor-grabbing origin-top z-20 rounded-b-[16px]"
           >
             {/* Hero Section Container */}
             <div className="relative w-full h-[180px] md:h-[280px] z-20 pointer-events-none">
@@ -161,7 +158,7 @@ export function TrendyCalendar() {
 
                 {/* Main Uncropped Portrait */}
                 <img src="/portrait.png" className="absolute inset-0 w-full h-[120%] -top-[10%] object-contain object-center z-10 drop-shadow-2xl" />
-                
+
                 <div className="absolute bottom-0 left-0 w-full h-[80px] bg-gradient-to-t from-[#3a3b40] via-[#3a3b40]/80 to-transparent z-20 pointer-events-none" />
               </div>
 
@@ -176,14 +173,14 @@ export function TrendyCalendar() {
               {/* LEFT: 月份备注 Section (5 Lines) */}
               <div className="md:flex-[0.25] flex flex-col mt-1 md:pr-10 border-b md:border-b-0 md:border-r border-white/30 pb-2 md:pb-0">
                 <h3 className="text-[10px] md:text-[11px] font-bold text-white/90 tracking-widest mb-2 uppercase">Monthly Schedule</h3>
-                <div className="flex flex-col gap-[1px]">
+                <div className="flex flex-col gap-2 md:gap-6 mt-2 md:mt-4">
                   {monthNotesData.map((note, i) => (
                     <input
                       key={i}
                       value={note}
                       onChange={(e) => setMonthNote(currentMonthKey, i, e.target.value)}
                       placeholder={`Memo line ${i + 1}`}
-                      className="w-full bg-transparent border-b border-white/40 h-6 text-white/90 placeholder:text-white/30 italic text-[12px] md:text-[13px] focus:outline-none focus:border-[#df8c2c] transition-all font-serif cursor-text"
+                      className="w-full bg-transparent border-b border-white/40 h-8 md:h-10 text-white/90 placeholder:text-white/30 italic text-[13px] md:text-[15px] focus:outline-none focus:border-[#df8c2c] transition-all font-serif cursor-text"
                       onPointerDownCapture={(e) => e.stopPropagation()} // Prevent drag conflict
                     />
                   ))}
@@ -232,30 +229,28 @@ export function TrendyCalendar() {
                             const hasNote = dayNotes[dateKey]?.some(n => n.trim().length > 0);
 
                             return (
-                              <div key={dayIndex} className="relative flex justify-center py-[1px]">
+                              <div key={dayIndex} className="relative flex justify-center py-1 md:py-[6px]">
                                 <button
                                   onClick={() => handleDateClick(date)}
                                   onPointerDown={(e) => e.stopPropagation()}
                                   suppressHydrationWarning
                                   className={cn(
-                                    "w-8 h-8 flex items-center justify-center rounded-full text-[13px] transition-all relative z-10",
-                                    !isCurrMonth ? "text-[#a0a0a0]/40" : "text-white font-medium",
-                                    isSelectedDate ? "text-[#313235] font-bold" : "",
-                                    isDayInRange ? "bg-[#df8c2c]/20 text-white rounded-none" : ""
+                                    "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center border rounded-sm text-[12px] md:text-[14px] transition-all relative z-10",
+                                    !isCurrMonth ? "text-[#a0a0a0]/30 border-white/5" : "text-white font-medium border-white/15 hover:border-white/40 hover:bg-white/5",
+                                    isSelectedDate ? "text-[#3a3b40] font-bold border-transparent" : "",
+                                    isDayInRange && !isSelectedDate ? "bg-[#df8c2c]/20 border-[#df8c2c]/30 text-white" : ""
                                   )}
                                 >
                                   {format(date, "d")}
                                 </button>
                                 {isSelectedDate && (
-                                  <motion.div layoutId="sel" className="absolute inset-0 m-auto w-[28px] h-[28px] rounded-full bg-[#df8c2c] z-0 shadow-lg shadow-[#df8c2c]/30" />
+                                  <motion.div layoutId="sel" className="absolute inset-0 m-auto w-8 h-8 md:w-10 md:h-10 rounded-sm bg-white z-0 shadow-lg shadow-white/20" />
                                 )}
-                                {hasNote && !isSelectedDate && <div className="absolute bottom-1 w-1 h-1 rounded-full bg-[#df8c2c]/50" />}
+                                {hasNote && !isSelectedDate && <div className="absolute top-2 right-1/4 w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-[#df8c2c]" />}
                               </div>
                             );
                           })}
                         </div>
-
-                        {/* Inline Expansion removed in favor of Popup */}
                       </React.Fragment>
                     );
                   })}

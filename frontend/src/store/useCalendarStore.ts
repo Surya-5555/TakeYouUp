@@ -27,7 +27,7 @@ export const useCalendarStore = create<CalendarState>()(
       setRangeEnd: (date: Date | null) => set({ rangeEnd: date ? date.toISOString() : null }),
       setMonthNote: (monthKey: string, index: number, content: string) =>
         set((state) => {
-          const notes = state.monthNotes[monthKey] || ["", "", "", "", ""];
+          const notes = state.monthNotes[monthKey] || ["", "", "", ""];
           const newNotes = [...notes];
           newNotes[index] = content;
           return {
