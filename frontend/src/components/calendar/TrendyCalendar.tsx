@@ -122,7 +122,7 @@ export function TrendyCalendar() {
 
       <div className="w-[95%] max-w-[1000px] relative font-sans select-none" style={{ perspective: "1500px" }}>
         {/* Invisible Ghost layer to maintain height during 3D absolute flips */}
-        <div className="invisible pointer-events-none opacity-0 pb-4 h-[440px] md:h-[510px] w-full"></div>
+        <div className="invisible pointer-events-none opacity-0 pb-4 h-[740px] md:h-[510px] w-full" aria-hidden="true"></div>
 
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           <motion.div
