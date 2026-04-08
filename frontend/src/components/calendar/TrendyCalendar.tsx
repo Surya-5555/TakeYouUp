@@ -36,9 +36,11 @@ export function TrendyCalendar() {
   };
 
   const currentMonth = parseISO(curMonthStr);
+  const currentMonthKey = format(currentMonth, "yyyy-MM");
   const rangeStart = startStr ? parseISO(startStr) : null;
   const rangeEnd = endStr ? parseISO(endStr) : null;
 
+  const monthNotesData = monthNotes[currentMonthKey] || ["", "", "", "", ""];
   const rows = generateCalendarGrid(currentMonth);
 
   const handleDateClick = (date: Date) => {
@@ -175,11 +177,11 @@ export function TrendyCalendar() {
               <div className="md:flex-[0.25] flex flex-col mt-1 md:pr-10 border-b md:border-b-0 md:border-r border-white/30 pb-2 md:pb-0">
                 <h3 className="text-[10px] md:text-[11px] font-bold text-white/90 tracking-widest mb-2 uppercase">Monthly Schedule</h3>
                 <div className="flex flex-col gap-[1px]">
-                  {monthNotes.map((note, i) => (
+                  {monthNotesData.map((note, i) => (
                     <input
                       key={i}
                       value={note}
-                      onChange={(e) => setMonthNote(i, e.target.value)}
+                      onChange={(e) => setMonthNote(currentMonthKey, i, e.target.value)}
                       placeholder={`Memo line ${i + 1}`}
                       className="w-full bg-transparent border-b border-white/40 h-6 text-white/90 placeholder:text-white/30 italic text-[12px] md:text-[13px] focus:outline-none focus:border-[#df8c2c] transition-all font-serif cursor-text"
                       onPointerDownCapture={(e) => e.stopPropagation()} // Prevent drag conflict
