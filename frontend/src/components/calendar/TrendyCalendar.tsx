@@ -199,7 +199,7 @@ export function TrendyCalendar() {
       releasePullGesture();
 
       const verticalDelta = mouseDownYRef.current - event.clientY;
-      if (Math.abs(verticalDelta) <= 70) return;
+      if (Math.abs(verticalDelta) <= 85) return;
 
       setFlipPhase((previousPhase) => {
         if (previousPhase !== "idle") return previousPhase;
@@ -353,7 +353,7 @@ export function TrendyCalendar() {
               isDraggingRef.current = false;
               releasePullGesture();
               const verticalDelta = touchStartYRef.current - e.changedTouches[0].clientY;
-              if (Math.abs(verticalDelta) <= 55) return;
+              if (Math.abs(verticalDelta) <= 85) return;
               startMonthFlip(verticalDelta > 0 ? 1 : -1);
             }}
             onMouseDown={(e) => {
@@ -374,21 +374,35 @@ export function TrendyCalendar() {
               <div className={styles.heroBgBlur} style={{ backgroundImage: "url('/portrait.png')" }} />
               <div className={styles.heroPattern} />
               <div className={styles.heroOverlay} />
-              <div className="absolute inset-y-0 left-0 z-[5] flex max-w-[65%] flex-col justify-center px-5 py-4">
+              <div className="absolute inset-y-0 left-0 z-[10] flex max-w-[65%] flex-col justify-center px-5 py-4">
                 <div className="mb-1 font-['Caveat_Brush'] text-[clamp(9px,2vw,12px)] uppercase tracking-[0.2em] text-[#df8c2c]">Monthly Planner</div>
                 <div className="mb-1.5 font-['Caveat_Brush'] text-[clamp(28px,7vw,52px)] leading-none text-[#fdf6e3]">{format(currentMonth, "MMMM")}</div>
                 <div className="font-['Caveat'] text-[clamp(13px,3vw,20px)] tracking-[0.15em] text-[rgba(253,246,227,0.55)]">{format(currentMonth, "yyyy")}</div>
                 <div className="mt-2.5 flex gap-2">
                   <button
                     className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border-[1.5px] border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.1)] text-[#fdf6e3] transition-all duration-150 hover:scale-105 hover:bg-[rgba(255,255,255,0.22)] active:scale-95 active:bg-[rgba(255,255,255,0.3)]"
-                    onClick={() => startMonthFlip(-1)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startMonthFlip(-1);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
                     aria-label="Previous month"
                   >
                     <ChevronLeft size={20} />
                   </button>
                   <button
                     className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg border-[1.5px] border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.1)] text-[#fdf6e3] transition-all duration-150 hover:scale-105 hover:bg-[rgba(255,255,255,0.22)] active:scale-95 active:bg-[rgba(255,255,255,0.3)]"
-                    onClick={() => startMonthFlip(1)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startMonthFlip(1);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
                     aria-label="Next month"
                   >
                     <ChevronRight size={20} />
@@ -420,6 +434,7 @@ export function TrendyCalendar() {
                         onChange={(e) => setMonthNote(currentMonthKey, idx, e.target.value)}
                         onMouseDown={(e) => e.stopPropagation()}
                         onTouchStart={(e) => e.stopPropagation()}
+                        onTouchEnd={(e) => e.stopPropagation()}
                         aria-label={`Monthly note line ${idx + 1}`}
                       />
                     </div>
@@ -449,7 +464,14 @@ export function TrendyCalendar() {
                       <div key={dateKey} className={`flex aspect-square items-center justify-center ${col === 0 ? styles.sunCol : ""}`}>
                         <button
                           className={`flex min-h-11 min-w-11 aspect-square w-[min(90%,48px)] items-center justify-center rounded-[5px] border-none bg-transparent font-sans text-[clamp(12px,3vw,16px)] font-semibold text-[#3a2a10] transition-all duration-[120ms] hover:bg-[rgba(223,140,44,0.18)] disabled:cursor-default ${!inMonth ? styles.other : ""} ${isToday ? styles.today : ""} ${hasNote ? styles.hasNote : ""}`}
-                          onClick={() => openDayNotesModal(date)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDayNotesModal(date);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onTouchStart={(e) => e.stopPropagation()}
+                          onTouchMove={(e) => e.stopPropagation()}
+                          onTouchEnd={(e) => e.stopPropagation()}
                           disabled={!inMonth}
                           aria-label={format(date, "EEEE, MMMM d, yyyy")}
                         >
