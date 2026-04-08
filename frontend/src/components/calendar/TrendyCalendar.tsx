@@ -237,8 +237,9 @@ export function TrendyCalendar() {
                                   className={cn(
                                     "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center border rounded-sm text-[12px] md:text-[14px] transition-all relative z-10",
                                     !isCurrMonth ? "text-[#a0a0a0]/30 border-white/5" : "text-white font-medium border-white/15 hover:border-white/40 hover:bg-white/5",
-                                    isSelectedDate ? "text-[#3a3b40] font-bold border-transparent" : "",
-                                    isDayInRange && !isSelectedDate ? "bg-[#df8c2c]/20 border-[#df8c2c]/30 text-white" : ""
+                                    isSelectedDate ? "text-[#3a3b40] font-black tracking-widest border-transparent" : "",
+                                    isDayInRange && !isSelectedDate && !hasNote ? "bg-[#df8c2c]/20 border-[#df8c2c]/30 text-white" : "",
+                                    hasNote && !isSelectedDate ? "bg-[#df8c2c]/90 text-[#1a1a1c] font-black border-[#df8c2c] shadow-[0_0_10px_rgba(223,140,44,0.3)]" : ""
                                   )}
                                 >
                                   {format(date, "d")}
@@ -246,7 +247,6 @@ export function TrendyCalendar() {
                                 {isSelectedDate && (
                                   <motion.div layoutId="sel" className="absolute inset-0 m-auto w-8 h-8 md:w-10 md:h-10 rounded-sm bg-white z-0 shadow-lg shadow-white/20" />
                                 )}
-                                {hasNote && !isSelectedDate && <div className="absolute top-2 right-1/4 w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-[#df8c2c]" />}
                               </div>
                             );
                           })}
