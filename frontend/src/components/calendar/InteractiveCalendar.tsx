@@ -20,7 +20,7 @@ import {
 import { ChevronLeft, ChevronRight, CalendarRange } from "lucide-react";
 import { useCalendarStore, getCurrentMonthIso } from "@/store/useCalendarStore";
 import type { InteractionMode, SavedRange } from "@/store/useCalendarStore";
-import styles from "./TrendyCalendar.module.css";
+import styles from "./InteractiveCalendar.module.css";
 
 type TransitionPhase = "idle" | "flippingOutNext" | "flippingOutPrev" | "flippingInNext" | "flippingInPrev";
 

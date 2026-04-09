@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarIntro } from "@/components/calendar/CalendarIntro";
-import { TrendyCalendar } from "@/components/calendar/TrendyCalendar";
+import { TrendyCalendar } from "@/components/calendar/InteractiveCalendar";
 
 export default function Home() {
   const [introFinished, setIntroFinished] = useState(false);
