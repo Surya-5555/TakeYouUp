@@ -8,10 +8,6 @@ This project goes beyond a standard grid UI by combining strict functional requi
 * **Live Demo:** https://takeyouup.vercel.app/
 * **Video Walkthrough:** https://www.loom.com/share/2ac79d5a7c794cebb30a35fa62131d7d
 
-* **TechStack Diagram:** <img width="1410" height="795" alt="techStack" src="https://github.com/user-attachments/assets/c63cde45-055a-4c02-a41c-91a14f94f543" />
-
-* **Architecture Diagram:** <img width="1382" height="742" alt="architecture diagram" src="https://github.com/user-attachments/assets/9d4379fa-68a4-44c1-bf07-54be4936a81e" />
-
 ---
 
 ## Key Features & Creative Liberties
@@ -25,7 +21,7 @@ This project goes beyond a standard grid UI by combining strict functional requi
 
 ---
 
-## Tech Stack & Architecture
+## Tech Stack
 
 This project is strictly frontend, utilizing client-side storage for persistence as requested.
 
@@ -34,6 +30,21 @@ This project is strictly frontend, utilizing client-side storage for persistence
 * **Styling:** Tailwind CSS (Grid/Responsive) + CSS Modules (3D Physics/Animations).
 * **Date Logic:** `date-fns` (Bulletproof, timezone-safe calculations like `eachDayOfInterval`).
 * **Icons/Assets:** `lucide-react` (For crisp, scalable UI icons).
+
+<img width="1410" height="795" alt="techStack" src="https://github.com/user-attachments/assets/c63cde45-055a-4c02-a41c-91a14f94f543" />
+
+---
+
+## Architecture
+
+The project follows a modular frontend architecture designed for performance and immersive 3D interactions.
+
+1. **Client-Side State:** A centralized Zustand store manages the calendar logic, notes, and range selections.
+2. **Persistence Layer:** Integrated with `localStorage` to ensure user data (notes, ranges) persists across sessions without a backend.
+3. **Styling Hybridization:** Combines Tailwind CSS for layout structure with CSS Modules for high-precision 3D animations and perspective transforms.
+4. **Component Isolation:** Each calendar feature (Grid, Intro, Modal) is isolated for better maintainability and performance optimization.
+
+<img width="1382" height="742" alt="architecture diagram" src="https://github.com/user-attachments/assets/9d4379fa-68a4-44c1-bf07-54be4936a81e" />
 
 ---
 
