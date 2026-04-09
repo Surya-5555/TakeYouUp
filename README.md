@@ -6,7 +6,7 @@ This project goes beyond a standard grid UI by combining strict functional requi
 
 ### Quick Links
 * **Live Demo:** https://takeyouup.vercel.app/
-* **Video Walkthrough:** https://www.loom.com/share/4348081030084703938a78930521978e
+* **Video Walkthrough:** https://www.loom.com/share/2ac79d5a7c794cebb30a35fa62131d7d
 
 * **TechStack Diagram:** <img width="1410" height="795" alt="techStack" src="https://github.com/user-attachments/assets/c63cde45-055a-4c02-a41c-91a14f94f543" />
 
