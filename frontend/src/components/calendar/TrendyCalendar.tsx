@@ -116,6 +116,8 @@ export function TrendyCalendar() {
     rangeEnd,
     interactionMode,
     savedRanges,
+    theme,
+    toggleTheme,
     setRangeStart,
     setRangeEnd,
     clearTempRange,
@@ -370,8 +372,12 @@ export function TrendyCalendar() {
     : 0;
 
   return (
-    <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-start overflow-x-hidden overflow-y-auto bg-[#1e0e06] px-4 pb-12 pt-6">
+    <div 
+      className={styles.container}
+      data-theme={theme}
+    >
       <BackgroundEnvironment />
+      <RoomLightingFixture theme={theme} onToggle={toggleTheme} />
 
       <RoomWallpaper />
       <FloorLevel />
@@ -485,15 +491,15 @@ function BackgroundEnvironment() {
           <feDisplacementMap in="SourceGraphic" scale="1.8" xChannelSelector="R" yChannelSelector="G" />
         </filter>
         <pattern id="brick-pattern" x="0" y="0" width="90" height="38" patternUnits="userSpaceOnUse">
-          <rect x="1" y="1" width="86" height="16" rx="1" fill="#3a1e10" stroke="#200e05" strokeWidth="0.8" filter="url(#brick-roughness)" />
-          <rect x="-44" y="20" width="86" height="16" rx="1" fill="#371c0e" stroke="#200e05" strokeWidth="0.8" filter="url(#brick-roughness)" />
-          <rect x="46" y="20" width="86" height="16" rx="1" fill="#3c2012" stroke="#200e05" strokeWidth="0.8" filter="url(#brick-roughness)" />
-          <line x1="0" y1="18.5" x2="90" y2="18.5" stroke="#180a04" strokeWidth="1.8" opacity="0.75" />
-          <line x1="0" y1="37.5" x2="90" y2="37.5" stroke="#180a04" strokeWidth="1.8" opacity="0.75" />
+          <rect x="1" y="1" width="86" height="16" rx="1" fill="var(--brick-fill-1)" stroke="var(--brick-stroke)" strokeWidth="0.8" filter="url(#brick-roughness)" />
+          <rect x="-44" y="20" width="86" height="16" rx="1" fill="var(--brick-fill-2)" stroke="var(--brick-stroke)" strokeWidth="0.8" filter="url(#brick-roughness)" />
+          <rect x="46" y="20" width="86" height="16" rx="1" fill="var(--brick-fill-3)" stroke="var(--brick-stroke)" strokeWidth="0.8" filter="url(#brick-roughness)" />
+          <line x1="0" y1="18.5" x2="90" y2="18.5" stroke="var(--brick-mortar)" strokeWidth="1.8" opacity="0.75" />
+          <line x1="0" y1="37.5" x2="90" y2="37.5" stroke="var(--brick-mortar)" strokeWidth="1.8" opacity="0.75" />
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill="url(#brick-pattern)" />
-      <rect width="100%" height="100%" fill="rgba(0,0,0,0.22)" />
+      <rect width="100%" height="100%" fill="rgba(0,0,0,0.15)" />
     </svg>
   );
 }
@@ -540,10 +546,29 @@ function WindowFeature() {
         ))}
       </div>
       <div className={styles.windowMoon} aria-hidden="true" />
+      <div className={styles.windowSun} aria-hidden="true" />
       <div className={styles.curtainRod} aria-hidden="true" />
       <div className={styles.curtainLeft} aria-hidden="true" />
       <div className={styles.curtainRight} aria-hidden="true" />
     </>
+  );
+}
+
+function RoomLightingFixture({ theme, onToggle }: { theme: 'light' | 'dark', onToggle: () => void }) {
+  return (
+    <div className={styles.themeFixture}>
+      <div className={styles.bulbBase} />
+      <div className={styles.lightBulb} onClick={onToggle} title={`Switch to ${theme === 'dark' ? 'Morning' : 'Night'}`} />
+      <div className={styles.pullChain} onClick={() => {
+        // Physical click feel: slightly more weight on the pull chain
+        onToggle();
+      }}>
+        <div className={styles.pullHandle} />
+      </div>
+      <div className={styles.switchText}>
+        {theme === 'dark' ? 'Night' : 'Morning'}
+      </div>
+    </div>
   );
 }
 
@@ -610,14 +635,14 @@ interface HeroProps {
 
 function CalendarHeroSection({ activeDate, onPrev, onNext }: HeroProps) {
   return (
-    <div className="relative h-[clamp(140px,32vw,200px)] overflow-hidden rounded-none border-b-[3px] border-b-[rgba(220,140,40,0.6)] bg-[#1c0f07]">
+    <div className="relative h-[clamp(140px,32vw,200px)] overflow-hidden rounded-none border-b-[3px] border-b-[rgba(220,140,40,0.6)] bg-[var(--hero-bg)] transition-colors duration-[var(--transition-speed)]">
       <div className={styles.heroBgBlur} style={{ backgroundImage: "url('/portrait.png')" }} />
       <div className={styles.heroPattern} />
       <div className={styles.heroOverlay} />
       <div className="absolute inset-y-0 left-0 z-10 flex max-w-[65%] flex-col justify-center px-5 py-4">
         <div className="mb-1 font-['Caveat_Brush'] text-[clamp(9px,2vw,12px)] uppercase tracking-[0.2em] text-[#df8c2c]">Monthly Planner</div>
-        <div className="mb-1.5 font-['Caveat_Brush'] text-[clamp(28px,7vw,52px)] leading-none text-[#fdf6e3]">{format(activeDate, "MMMM")}</div>
-        <div className="font-['Caveat'] text-[clamp(13px,3vw,20px)] tracking-[0.15em] text-[rgba(253,246,227,0.55)]">{format(activeDate, "yyyy")}</div>
+        <div className="mb-1.5 font-['Caveat_Brush'] text-[clamp(28px,7vw,52px)] leading-none text-[var(--hero-text)] transition-colors duration-[var(--transition-speed)]">{format(activeDate, "MMMM")}</div>
+        <div className="font-['Caveat'] text-[clamp(13px,3vw,20px)] tracking-[0.15em] text-[var(--hero-subtext)] transition-colors duration-[var(--transition-speed)]">{format(activeDate, "yyyy")}</div>
         <div className="mt-2.5 flex gap-2">
           <NavButton direction="prev" onClick={onPrev} />
           <NavButton direction="next" onClick={onNext} />
@@ -637,7 +662,7 @@ function NavButton({ direction, onClick }: { direction: "prev" | "next"; onClick
   const isPrev = direction === "prev";
   return (
     <button
-      className="flex h-11 w-11 items-center justify-center rounded-lg border-[1.5px] border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.1)] text-[#fdf6e3] transition-all hover:scale-105 hover:bg-[rgba(255,255,255,0.22)] active:scale-95 active:bg-[rgba(255,255,255,0.3)] cursor-pointer"
+      className="flex h-11 w-11 items-center justify-center rounded-lg border-[1.5px] border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.1)] text-[var(--hero-text)] transition-all hover:scale-105 hover:bg-[rgba(255,255,255,0.22)] active:scale-95 active:bg-[rgba(255,255,255,0.3)] cursor-pointer"
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
@@ -660,7 +685,7 @@ function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
   return (
     <div className="mb-2 flex items-center justify-center">
       <div
-        className="relative flex h-[30px] w-[210px] rounded-full border border-[rgba(150,110,50,0.35)] bg-[rgba(60,42,16,0.08)] p-[2px] shadow-[inset_0_1px_3px_rgba(0,0,0,0.08)]"
+        className="relative flex h-[30px] w-[210px] rounded-full border border-[var(--planner-border)] bg-[rgba(60,42,16,0.08)] p-[2px] shadow-[inset_0_1px_3px_rgba(0,0,0,0.08)]"
         role="radiogroup"
         aria-label="Interaction mode"
       >
@@ -676,7 +701,7 @@ function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
         <button
           className={`relative z-10 flex flex-1 items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200 cursor-pointer ${mode === "notes"
             ? "text-white"
-            : "text-[#8a6a3a] hover:text-[#6a4a2a]"
+            : "text-[var(--text-muted)] hover:text-[#c47820]"
             }`}
           onClick={(e) => { e.stopPropagation(); onModeChange("notes"); }}
           onMouseDown={(e) => e.stopPropagation()}
@@ -693,7 +718,7 @@ function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
         <button
           className={`relative z-10 flex flex-1 items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200 cursor-pointer ${mode === "range"
             ? "text-white"
-            : "text-[#8a6a3a] hover:text-[#6a4a2a]"
+            : "text-[var(--text-muted)] hover:text-[#c47820]"
             }`}
           onClick={(e) => { e.stopPropagation(); onModeChange("range"); }}
           onMouseDown={(e) => e.stopPropagation()}
@@ -720,14 +745,14 @@ interface PlannerColumnProps {
 
 function MonthlyPlannerColumn({ notes, monthKey, onUpdate }: PlannerColumnProps) {
   return (
-    <aside className="flex flex-col border-b-[1.5px] border-b-[rgba(150,110,50,0.35)] border-dashed px-5 py-3.5 md:border-b-0 md:border-r-[1.5px] md:border-r-[rgba(150,110,50,0.35)]">
-      <div className="mb-2.5 text-[9px] font-bold uppercase tracking-[0.22em] text-[#a07840]">Monthly focus</div>
+    <aside className="flex flex-col border-b-[1.5px] border-b-[var(--planner-border)] border-dashed px-5 py-3.5 md:border-b-0 md:border-r-[1.5px] md:border-r-[var(--planner-border)] transition-colors duration-[var(--transition-speed)]">
+      <div className="mb-2.5 text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--text-muted)] transition-colors duration-[var(--transition-speed)]">Monthly focus</div>
       <div className="flex flex-1 flex-col">
         {notes.map((content, idx) => (
-          <div key={idx} className="flex items-center gap-1.5 border-b border-b-[rgba(150,110,50,0.28)] px-0.5 py-1.5">
+          <div key={idx} className="flex items-center gap-1.5 border-b border-b-[rgba(150,110,50,0.15)] px-0.5 py-1.5">
             <div className="h-[5px] w-[5px] shrink-0 rounded-full bg-[#df8c2c] opacity-70" />
             <input
-              className="w-full bg-transparent font-sans text-[clamp(11px,2.4vw,13px)] text-[#3a2a10] outline-none placeholder:text-[#c0a870]"
+              className="w-full bg-transparent font-sans text-[clamp(11px,2.4vw,13px)] text-[var(--text-primary)] outline-none placeholder:text-[var(--input-placeholder)] transition-colors duration-[var(--transition-speed)]"
               type="text"
               value={content}
               placeholder={idx === 0 ? "Key objective..." : "..."}
@@ -744,7 +769,7 @@ function WeekdayHeader() {
   return (
     <div className="mb-1 grid grid-cols-7">
       {DAY_LABELS.map((day, idx) => (
-        <div key={day} className={`py-0.5 text-center text-[clamp(9px,2.2vw,11px)] font-bold tracking-[0.04em] text-[#8a6a3a] ${idx === 0 ? "text-[#b83020]" : ""}`}>
+        <div key={day} className={`py-0.5 text-center text-[clamp(9px,2.2vw,11px)] font-bold tracking-[0.04em] text-[var(--text-muted)] transition-colors duration-[var(--transition-speed)] ${idx === 0 ? "text-[#b83020]" : ""}`}>
           {day}
         </div>
       ))}
@@ -824,15 +849,15 @@ function CalendarDatesGrid({
             {/* Range background band — fills entire cell for connected visual */}
             {isInMonth && isRangeRelated && (
               <div
-                className="absolute inset-y-[1px] pointer-events-none"
+                className="absolute inset-y-[1px] pointer-events-none transition-all duration-[var(--transition-speed)]"
                 style={{
                   left: 0,
                   right: 0,
-                  background: "rgba(0, 0, 0, 0.05)",
-                  borderTop: "1.5px solid rgba(40, 40, 40, 0.45)",
-                  borderBottom: "1.5px solid rgba(40, 40, 40, 0.45)",
-                  borderLeft: (isRangeStart || isRowStart) ? "1.5px solid rgba(40, 40, 40, 0.45)" : "none",
-                  borderRight: (isRangeEnd || isRowEnd) ? "1.5px solid rgba(40, 40, 40, 0.45)" : "none",
+                  background: "var(--range-ribbon-bg)",
+                  borderTop: "1.5px solid var(--range-ribbon-border)",
+                  borderBottom: "1.5px solid var(--range-ribbon-border)",
+                  borderLeft: (isRangeStart || isRowStart) ? "1.5px solid var(--range-ribbon-border)" : "none",
+                  borderRight: (isRangeEnd || isRowEnd) ? "1.5px solid var(--range-ribbon-border)" : "none",
                   borderRadius:
                     (isRangeStart || isRowStart) && (isRangeEnd || isRowEnd)
                       ? "8px"
@@ -849,7 +874,7 @@ function CalendarDatesGrid({
               className={`
                 relative z-10 flex min-h-[clamp(34px,8vw,42px)] min-w-[clamp(34px,8vw,42px)] aspect-square w-[min(82%,44px)] 
                 items-center justify-center rounded-[5px] border-none bg-transparent font-sans text-[clamp(11px,2.8vw,15px)] 
-                font-semibold text-[#3a2a10] transition-all duration-120 hover:bg-[rgba(223,140,44,0.18)] cursor-pointer
+                font-semibold text-[var(--text-primary)] transition-all duration-120 hover:bg-[rgba(223,140,44,0.18)] cursor-pointer
                 ${!isInMonth ? styles.other : ""} 
                 ${isCurrentDay && !isRangeEndpoint ? styles.today : ""} 
                 ${hasChecklist && !isRangeEndpoint ? styles.hasNote : ""}
@@ -898,16 +923,16 @@ function AgendaPopup({ isOpen, onClose, dateKey, habitNotes, onHabitChange, rang
   const hasRange = isRangePopup && rangeStart && rangeEnd && rangeCount > 0;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[rgba(15,7,3,0.75)] p-4 backdrop-blur-md" onClick={onClose}>
+    <div className={`fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-md transition-colors duration-[var(--transition-speed)] ${styles.popupBackdrop}`} onClick={onClose}>
       <div
-        className="relative w-full max-w-[min(360px,calc(100vw-32px))] rounded-[14px] border-2 border-[rgba(150,110,50,0.45)] bg-[#fdf6e3] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)]"
+        className="relative w-full max-w-[min(360px,calc(100vw-32px))] rounded-[14px] border-2 border-[var(--cal-border)] bg-[var(--cal-bg)] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)] transition-colors duration-[var(--transition-speed)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="absolute right-4 top-4 border-none bg-transparent text-2xl text-[#8a6a3a] cursor-pointer" onClick={onClose}>×</button>
-        <div className="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#a07840]">
+        <button className="absolute right-4 top-4 border-none bg-transparent text-2xl text-[var(--text-muted)] cursor-pointer" onClick={onClose}>×</button>
+        <div className="mb-1 text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
           {hasRange ? "Range Event" : "Daily agenda"}
         </div>
-        <div className="mb-5 font-['Caveat_Brush'] text-2xl text-[#3a2a10]">
+        <div className="mb-5 font-['Caveat_Brush'] text-2xl text-[var(--text-primary)]">
           {hasRange
             ? `${format(parseISO(rangeStart!), "MMM d")} — ${format(parseISO(rangeEnd!), "MMM d")}`
             : dateKey
@@ -929,7 +954,7 @@ function AgendaPopup({ isOpen, onClose, dateKey, habitNotes, onHabitChange, rang
           {habitNotes.map((text, idx) => (
             <input
               key={idx}
-              className="w-full border-b-[1.2px] border-b-[rgba(150,110,50,0.3)] bg-transparent py-2.5 font-sans text-sm text-[#3a2a10] outline-none placeholder:text-[#c0a870]"
+              className="w-full border-b-[1.2px] border-b-[var(--planner-border)] bg-transparent py-2.5 font-sans text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--input-placeholder)] transition-colors duration-[var(--transition-speed)]"
               value={text}
               placeholder={idx === 0 ? "What's the plan?" : "..."}
               onChange={(e) => {
@@ -941,7 +966,7 @@ function AgendaPopup({ isOpen, onClose, dateKey, habitNotes, onHabitChange, rang
           ))}
         </div>
         <div className="mt-6 flex justify-end gap-3">
-          <button className="px-5 py-2 font-['Caveat_Brush'] text-base text-[#8a6a3a] cursor-pointer" onClick={onClose}>Cancel</button>
+          <button className="px-5 py-2 font-['Caveat_Brush'] text-base text-[var(--text-muted)] cursor-pointer" onClick={onClose}>Cancel</button>
           <button className="px-6 py-2 bg-[#df8c2c] rounded-full text-white font-['Caveat_Brush'] shadow-lg cursor-pointer" onClick={onSave}>
             {hasRange ? `Save to ${rangeCount} Days` : "Save Changes"}
           </button>

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export type InteractionMode = "range" | "notes";
+export type ThemeMode = "light" | "dark";
 
 export interface SavedRange {
   id: string;
@@ -17,6 +18,7 @@ export interface CalendarState {
   rangeEnd: string | null;
   interactionMode: InteractionMode;
   savedRanges: SavedRange[];
+  theme: ThemeMode;
 
   updateDisplayMonth: (date: Date) => void;
   updateMonthlyAgendaLine: (monthKey: string, index: number, content: string) => void;
@@ -29,6 +31,7 @@ export interface CalendarState {
   setFullDayNote: (dateKey: string, notes: string[]) => void;
   addSavedRange: (start: string, end: string) => void;
   removeSavedRange: (id: string) => void;
+  toggleTheme: () => void;
 }
 
 const LEGACY_DEFAULT_MONTH_ISO = new Date(2021, 0, 1).toISOString();
@@ -54,6 +57,7 @@ export const useCalendarStore = create<CalendarState>()(
       rangeEnd: null,
       interactionMode: "notes" as InteractionMode,
       savedRanges: [],
+      theme: "dark" as ThemeMode,
 
       updateDisplayMonth: (date: Date) => {
         const standardMonthIso = new Date(
@@ -118,11 +122,13 @@ export const useCalendarStore = create<CalendarState>()(
           savedRanges: state.savedRanges.filter((r) => r.id !== id),
         }));
       },
+
+      toggleTheme: () => set((state) => ({ theme: state.theme === "dark" ? "light" : "dark" })),
     }),
     {
       name: "cal-physical-ux-data",
       storage: createJSONStorage(() => localStorage),
-      version: 5,
+      version: 6,
 
       partialize: (state) => {
         const {
@@ -144,12 +150,20 @@ export const useCalendarStore = create<CalendarState>()(
             monthlyPlannerAgendas: legacyState.monthlyPlannerAgendas || legacyState.monthNotes || {},
             dailyHabitNotes: legacyState.dailyHabitNotes || legacyState.dayNotes || {},
             savedRanges: [],
+            theme: "dark",
           };
         }
         if (version < 5) {
           return {
             ...legacyState,
             savedRanges: legacyState.savedRanges || [],
+            theme: "dark",
+          };
+        }
+        if (version < 6) {
+          return {
+            ...legacyState,
+            theme: legacyState.theme || "dark",
           };
         }
         return legacyState;

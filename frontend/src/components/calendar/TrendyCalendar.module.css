@@ -1,3 +1,88 @@
+/* ─── THEME TOKENS ─── */
+:root {
+  /* Default (Night/Dark) Tokens - DARK ROOM, LIGHT CALENDAR (Original Aesthetic) */
+  --room-bg: #0f0703;
+  --brick-fill-1: #2a1508;
+  --brick-fill-2: #251206;
+  --brick-fill-3: #2d180a;
+  --brick-stroke: #180a04;
+  --brick-mortar: #0a0401;
+  --floor-gradient: linear-gradient(180deg, #1a0c04 0%, #0a0401 100%);
+  --baseboard-gradient: linear-gradient(180deg, #3a1e10, #1a0c04);
+  --wallpaper-opacity: 0.02;
+  --window-bg: linear-gradient(135deg, #0d1a2a 0%, #1a3a5c 30%, #0f253d 100%);
+
+  --cal-bg: #fdf6e3;
+  --cal-border: rgba(150, 110, 50, 0.55);
+  --cal-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  --hero-bg: #1c0f07;
+  --hero-overlay-gradient: linear-gradient(90deg, rgba(20, 10, 4, 0.95) 0%, rgba(20, 10, 4, 0.6) 50%, rgba(20, 10, 4, 0.1) 100%);
+  --hero-text: #fdf6e3;
+  --hero-subtext: rgba(253, 246, 227, 0.55);
+
+  --text-primary: #3a2a10;
+  --text-muted: #8a6a3a;
+  --text-highlight: #df8c2c;
+
+  --range-ribbon-bg: rgba(0, 0, 0, 0.05);
+  --range-ribbon-border: rgba(40, 40, 40, 0.45);
+
+  --input-placeholder: #c0a870;
+  --planner-border: rgba(150, 110, 50, 0.35);
+
+  --transition-speed: 0.8s;
+  --hero-center-color: rgba(255, 255, 255, 0.15);
+}
+
+.container[data-theme="light"] {
+  /* Morning/Light Tokens - WARM COZY SUNLIGHT */
+  --room-bg: #f4e9dc;
+  --brick-fill-1: #e9ddd0;
+  --brick-fill-2: #e2d5c8;
+  --brick-fill-3: #ecdfd2;
+  --brick-stroke: #d0c0b0;
+  --brick-mortar: #c0b0a0;
+  --floor-gradient: linear-gradient(180deg, #d2b48c 0%, #bc9d76 100%);
+  --baseboard-gradient: linear-gradient(180deg, #a67d5d, #8b6b4d);
+  --wallpaper-opacity: 0.15;
+  --window-bg: linear-gradient(135deg, #ffcc33 0%, #ffe066 40%, #fffbf0 100%);
+
+  --cal-bg: #ffffff;
+  --cal-border: rgba(0, 0, 0, 0.08);
+  --cal-shadow: 0 20px 50px rgba(0, 0, 0, 0.06), 0 4px 15px rgba(0, 0, 0, 0.03);
+
+  --hero-bg: #fffcf0;
+  --hero-overlay-gradient: linear-gradient(90deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 100%);
+  --hero-text: #2a1a08;
+  --hero-subtext: rgba(58, 42, 16, 0.55);
+
+  --text-primary: #2a1a08;
+  --text-muted: #7a6a4a;
+  --text-highlight: #e67e22;
+
+  --range-ribbon-bg: rgba(230, 126, 34, 0.08);
+  --range-ribbon-border: rgba(230, 126, 34, 0.2);
+
+  --input-placeholder: #c0a870;
+  --planner-border: rgba(0, 0, 0, 0.06);
+  --hero-center-color: rgba(0, 0, 0, 1);
+}
+
+.container {
+  display: flex;
+  min-height: 100dvh;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--room-bg);
+  padding: 1.5rem 1rem 3rem 1rem;
+  transition: background-color var(--transition-speed);
+}
+
 /* ─── PHYSICAL ENVIRONMENT & BACKGROUND ─── */
 
 .brickBg {
@@ -5,6 +90,7 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  transition: opacity var(--transition-speed);
 }
 
 .wallpaper {
@@ -12,11 +98,12 @@
   inset: 0;
   bottom: 30%;
   z-index: 1;
-  opacity: 0.04;
+  opacity: var(--wallpaper-opacity);
   pointer-events: none;
   background-image:
     repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255, 200, 100, 0.6) 28px, rgba(255, 200, 100, 0.6) 29px),
     repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(255, 200, 100, 0.6) 28px, rgba(255, 200, 100, 0.6) 29px);
+  transition: opacity var(--transition-speed);
 }
 
 .roomFloor {
@@ -27,14 +114,19 @@
   height: 30%;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(180deg, #2a1508 0%, #1a0c04 100%);
+  background: var(--floor-gradient);
+  transition: background var(--transition-speed);
 }
 
 .roomFloor::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(88deg, transparent, transparent 70px, rgba(0, 0, 0, 0.18) 70px, rgba(0, 0, 0, 0.18) 71px);
+  background-image:
+    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(0, 0, 0, 0.12) 60px, rgba(0, 0, 0, 0.12) 61px),
+    repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(0, 0, 0, 0.08) 60px, rgba(0, 0, 0, 0.08) 61px);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.4) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.4) 100%);
 }
 
 .baseboard {
@@ -45,8 +137,9 @@
   height: 14px;
   z-index: 2;
   pointer-events: none;
-  background: linear-gradient(180deg, #4a2510, #2a1208);
+  background: var(--baseboard-gradient);
   border-top: 1px solid rgba(255, 200, 80, 0.15);
+  transition: background var(--transition-speed);
 }
 
 .wallVignette {
@@ -67,11 +160,12 @@
   height: clamp(140px, 18vw, 215px);
   z-index: 2;
   pointer-events: none;
-  background: linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 30%, #1e4a70 60%, #0d2a45 100%);
+  background: var(--window-bg);
   border: 6px solid #5a3010;
   border-radius: 2px;
   box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.55), 4px 4px 20px rgba(0, 0, 0, 0.7);
   overflow: hidden;
+  transition: background var(--transition-speed);
 }
 
 .roomWindow::before,
@@ -109,6 +203,30 @@
   background: radial-gradient(circle, #fffde8, #e8d080);
   box-shadow: 0 0 14px rgba(255, 240, 150, 0.75);
   animation: moonPulse 4.5s ease-in-out infinite alternate;
+  transition: opacity var(--transition-speed);
+}
+
+.container[data-theme="light"] .windowMoon {
+  opacity: 0;
+}
+
+.windowSun {
+  position: fixed;
+  top: calc(7% + 10px);
+  left: calc(3.5% + clamp(110px, 13vw, 175px) * 0.25);
+  width: 32px;
+  height: 32px;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff7a0, #ffb030);
+  box-shadow: 0 0 30px rgba(255, 200, 50, 0.8);
+  opacity: 0;
+  transition: opacity var(--transition-speed);
+}
+
+.container[data-theme="light"] .windowSun {
+  opacity: 1;
 }
 
 .curtainLeft,
@@ -248,6 +366,96 @@
   border-radius: 0 0 6px 6px;
   margin: 0 auto;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── PHYSICAL THEME TOGGLE (BULB & SWITCH) ─── */
+
+.themeFixture {
+  position: fixed;
+  top: 0;
+  right: 12%;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bulbBase {
+  width: 14px;
+  height: 20px;
+  background: #555;
+  border-radius: 0 0 4px 4px;
+}
+
+.lightBulb {
+  width: 30px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid #000000;
+  border-radius: 50% 50% 40% 40%;
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  margin-top: -2px;
+}
+
+.lightBulb::after {
+  content: "";
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: 2px;
+}
+
+.container[data-theme="dark"] .lightBulb {
+  background: #fff7a0;
+  box-shadow: 0 0 40px 10px rgba(255, 247, 160, 0.4), 0 0 100px 20px rgba(255, 247, 160, 0.2);
+  border-color: #fff;
+}
+
+.pullChain {
+  width: 2px;
+  height: 60px;
+  background: #888;
+  position: relative;
+  transition: height 0.15s ease-out;
+}
+
+.pullChain:active {
+  height: 75px;
+}
+
+.pullHandle {
+  width: 10px;
+  height: 10px;
+  background: #d4af37;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.switchText {
+  font-family: "Caveat Brush", cursive;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
+
+@media (max-width: 767px) {
+  .pullChain,
+  .switchText {
+    display: none;
+  }
 }
 
 /* ─── CALENDAR STACK & PHYSICS ─── */
@@ -399,15 +607,16 @@
 .calPage {
   position: relative;
   z-index: 5;
-  background: #fdf6e3;
+  background: var(--cal-bg);
   border-radius: 0 0 12px 12px;
-  border: 2px solid rgba(150, 110, 50, 0.55);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--cal-border);
+  box-shadow: var(--cal-shadow);
   transform-origin: 50% 0%;
   transform-style: preserve-3d;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   outline: none;
+  transition: background var(--transition-speed), border var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 /* ─── CALENDAR HERO SECTION ─── */
@@ -432,7 +641,8 @@
 .heroOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(20, 10, 4, 0.95) 0%, rgba(20, 10, 4, 0.6) 50%, rgba(20, 10, 4, 0.1) 100%);
+  background: var(--hero-overlay-gradient);
+  transition: background var(--transition-speed);
 }
 
 .heroCenterWord {
@@ -443,15 +653,16 @@
   font-family: "Caveat Brush", cursive;
   font-size: clamp(34px, 12vw, 84px);
   letter-spacing: 0.08em;
-  color: rgba(127, 210, 228, 0.45);
+  color: var(--hero-center-color);
   text-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   pointer-events: none;
   z-index: 3;
+  transition: color var(--transition-speed);
 }
 
 @media (max-width: 767px) {
   .heroCenterWord {
-    opacity: 0.55;
+    opacity: 1;
     top: 45%;
     font-size: clamp(40px, 15vw, 60px);
   }
@@ -508,18 +719,18 @@
 /* ─── CALENDAR GRID STATES ─── */
 
 .other {
-  color: #c0a870;
+  color: var(--text-muted);
   opacity: 0.45;
 }
 
 .today {
   background: rgba(223, 140, 44, 0.22);
-  color: #7a4a08;
+  color: var(--text-highlight);
   font-weight: 700;
 }
 
 .hasNote {
-  background: #df8c2c;
+  background: var(--text-highlight);
   color: #fff;
   font-weight: 700;
   border-radius: 6px;
@@ -537,10 +748,18 @@
 
 /* Days strictly between start & end — mild warm wash */
 .rangeInner {
-  color: #5a3a10;
+  color: var(--text-primary);
   background: rgba(223, 140, 44, 0.08);
   font-weight: 600;
   border-radius: 5px;
+}
+
+.popupBackdrop {
+  background: rgba(15, 7, 3, 0.75);
+}
+
+.container[data-theme="light"] .popupBackdrop {
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .sunCol button {
