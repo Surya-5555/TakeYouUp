@@ -435,7 +435,7 @@ export function TrendyCalendar() {
                 onUpdate={updateMonthlyAgendaLine}
               />
 
-              <div className="px-3 py-2.5 md:py-3">
+              <div className="px-5 py-2.5 md:py-3">
                 <ModeToggle
                   mode={interactionMode}
                   onModeChange={setInteractionMode}
@@ -637,7 +637,7 @@ function NavButton({ direction, onClick }: { direction: "prev" | "next"; onClick
   const isPrev = direction === "prev";
   return (
     <button
-      className="flex h-11 w-11 items-center justify-center rounded-lg border-[1.5px] border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.1)] text-[#fdf6e3] transition-all hover:scale-105 hover:bg-[rgba(255,255,255,0.22)] active:scale-95 active:bg-[rgba(255,255,255,0.3)]"
+      className="flex h-11 w-11 items-center justify-center rounded-lg border-[1.5px] border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.1)] text-[#fdf6e3] transition-all hover:scale-105 hover:bg-[rgba(255,255,255,0.22)] active:scale-95 active:bg-[rgba(255,255,255,0.3)] cursor-pointer"
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
@@ -674,7 +674,7 @@ function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
           }}
         />
         <button
-          className={`relative z-10 flex flex-1 items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200 ${mode === "notes"
+          className={`relative z-10 flex flex-1 items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200 cursor-pointer ${mode === "notes"
             ? "text-white"
             : "text-[#8a6a3a] hover:text-[#6a4a2a]"
             }`}
@@ -691,7 +691,7 @@ function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
           Daily Notes
         </button>
         <button
-          className={`relative z-10 flex flex-1 items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200 ${mode === "range"
+          className={`relative z-10 flex flex-1 items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-[0.08em] transition-colors duration-200 cursor-pointer ${mode === "range"
             ? "text-white"
             : "text-[#8a6a3a] hover:text-[#6a4a2a]"
             }`}
@@ -720,7 +720,7 @@ interface PlannerColumnProps {
 
 function MonthlyPlannerColumn({ notes, monthKey, onUpdate }: PlannerColumnProps) {
   return (
-    <aside className="flex flex-col border-b-[1.5px] border-b-[rgba(150,110,50,0.35)] border-dashed px-4 py-3.5 md:border-b-0 md:border-r-[1.5px] md:border-r-[rgba(150,110,50,0.35)]">
+    <aside className="flex flex-col border-b-[1.5px] border-b-[rgba(150,110,50,0.35)] border-dashed px-5 py-3.5 md:border-b-0 md:border-r-[1.5px] md:border-r-[rgba(150,110,50,0.35)]">
       <div className="mb-2.5 text-[9px] font-bold uppercase tracking-[0.22em] text-[#a07840]">Monthly focus</div>
       <div className="flex flex-1 flex-col">
         {notes.map((content, idx) => (
@@ -819,18 +819,22 @@ function CalendarDatesGrid({
         return (
           <div
             key={dateKey}
-            className={`relative flex items-center justify-center aspect-square ${isSunday ? styles.sunCol : ""}`}
+            className={`relative flex items-center justify-center aspect-square cursor-pointer ${isSunday ? styles.sunCol : ""}`}
           >
             {/* Range background band — fills entire cell for connected visual */}
             {isInMonth && isRangeRelated && (
               <div
-                className="absolute inset-y-[4px] pointer-events-none"
+                className="absolute inset-y-[1px] pointer-events-none"
                 style={{
-                  left: isRangeStart && !isRowStart ? "50%" : isInRange || isRangeEnd ? "0" : "50%",
-                  right: isRangeEnd && !isRowEnd ? "50%" : isInRange || isRangeStart ? "0" : "50%",
-                  background: "rgba(223, 140, 44, 0.12)",
+                  left: 0,
+                  right: 0,
+                  background: "rgba(0, 0, 0, 0.05)",
+                  borderTop: "1.5px solid rgba(40, 40, 40, 0.45)",
+                  borderBottom: "1.5px solid rgba(40, 40, 40, 0.45)",
+                  borderLeft: (isRangeStart || isRowStart) ? "1.5px solid rgba(40, 40, 40, 0.45)" : "none",
+                  borderRight: (isRangeEnd || isRowEnd) ? "1.5px solid rgba(40, 40, 40, 0.45)" : "none",
                   borderRadius:
-                    isRangeStart && isRangeEnd
+                    (isRangeStart || isRowStart) && (isRangeEnd || isRowEnd)
                       ? "8px"
                       : isRangeStart || isRowStart
                         ? "8px 0 0 8px"
@@ -843,9 +847,9 @@ function CalendarDatesGrid({
 
             <button
               className={`
-                relative z-10 flex min-h-[clamp(36px,9vw,44px)] min-w-[clamp(36px,9vw,44px)] aspect-square w-[min(90%,48px)] 
-                items-center justify-center rounded-[5px] border-none bg-transparent font-sans text-[clamp(12px,3vw,16px)] 
-                font-semibold text-[#3a2a10] transition-all duration-120 hover:bg-[rgba(223,140,44,0.18)]
+                relative z-10 flex min-h-[clamp(34px,8vw,42px)] min-w-[clamp(34px,8vw,42px)] aspect-square w-[min(82%,44px)] 
+                items-center justify-center rounded-[5px] border-none bg-transparent font-sans text-[clamp(11px,2.8vw,15px)] 
+                font-semibold text-[#3a2a10] transition-all duration-120 hover:bg-[rgba(223,140,44,0.18)] cursor-pointer
                 ${!isInMonth ? styles.other : ""} 
                 ${isCurrentDay && !isRangeEndpoint ? styles.today : ""} 
                 ${hasChecklist && !isRangeEndpoint ? styles.hasNote : ""}
@@ -899,7 +903,7 @@ function AgendaPopup({ isOpen, onClose, dateKey, habitNotes, onHabitChange, rang
         className="relative w-full max-w-[min(360px,calc(100vw-32px))] rounded-[14px] border-2 border-[rgba(150,110,50,0.45)] bg-[#fdf6e3] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="absolute right-4 top-4 border-none bg-transparent text-2xl text-[#8a6a3a]" onClick={onClose}>×</button>
+        <button className="absolute right-4 top-4 border-none bg-transparent text-2xl text-[#8a6a3a] cursor-pointer" onClick={onClose}>×</button>
         <div className="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#a07840]">
           {hasRange ? "Range Event" : "Daily agenda"}
         </div>
@@ -937,8 +941,8 @@ function AgendaPopup({ isOpen, onClose, dateKey, habitNotes, onHabitChange, rang
           ))}
         </div>
         <div className="mt-6 flex justify-end gap-3">
-          <button className="px-5 py-2 font-['Caveat_Brush'] text-base text-[#8a6a3a]" onClick={onClose}>Cancel</button>
-          <button className="px-6 py-2 bg-[#df8c2c] rounded-full text-white font-['Caveat_Brush'] shadow-lg" onClick={onSave}>
+          <button className="px-5 py-2 font-['Caveat_Brush'] text-base text-[#8a6a3a] cursor-pointer" onClick={onClose}>Cancel</button>
+          <button className="px-6 py-2 bg-[#df8c2c] rounded-full text-white font-['Caveat_Brush'] shadow-lg cursor-pointer" onClick={onSave}>
             {hasRange ? `Save to ${rangeCount} Days` : "Save Changes"}
           </button>
         </div>
